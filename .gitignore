@@ -1,5 +1,2 @@
-*
-!.gitignore
-!*.cpp
-!*.txt
-!*.md
+build
+cloud_data
