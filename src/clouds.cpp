@@ -14,27 +14,27 @@ static const double range = max-min;
 static const double numColors = 100;
 
 static const std::string files[] = {
-    "../../data/cli/cli_10.vti_scaled.vti",
-    "../../data/cli/cli_20.vti_scaled.vti",
-    "../../data/cli/cli_30.vti_scaled.vti",
-    "../../data/clw/clw_10.vti_scaled.vti",
-    "../../data/clw/clw_20.vti_scaled.vti",
-    "../../data/clw/clw_30.vti_scaled.vti",
-    "../../data/pres/pres_10.vti_scaled.vti",
-    "../../data/pres/pres_20.vti_scaled.vti",
-    "../../data/pres/pres_30.vti_scaled.vti",
-    "../../data/qr/qr_10.vti_scaled.vti",
-    "../../data/qr/qr_20.vti_scaled.vti",
-    "../../data/qr/qr_30.vti_scaled.vti",
-    "../../data/ua/ua_10.vti_scaled.vti",
-    "../../data/ua/ua_20.vti_scaled.vti",
-    "../../data/ua/ua_30.vti_scaled.vti",
-    "../../data/va/va_10.vti_scaled.vti",
-    "../../data/va/va_20.vti_scaled.vti",
-    "../../data/va/va_30.vti_scaled.vti",
-    "../../data/wa/wa_10.vti_scaled.vti",
-    "../../data/wa/wa_20.vti_scaled.vti",
-    "../../data/wa/wa_30.vti_scaled.vti",
+    "../../cloud_data/cli/cli_10.vti_scaled.vti",
+    "../../cloud_data/cli/cli_20.vti_scaled.vti",
+    "../../cloud_data/cli/cli_30.vti_scaled.vti",
+    "../../cloud_data/clw/clw_10.vti_scaled.vti",
+    "../../cloud_data/clw/clw_20.vti_scaled.vti",
+    "../../cloud_data/clw/clw_30.vti_scaled.vti",
+    "../../cloud_data/pres/pres_10.vti_scaled.vti",
+    "../../cloud_data/pres/pres_20.vti_scaled.vti",
+    "../../cloud_data/pres/pres_30.vti_scaled.vti",
+    "../../cloud_data/qr/qr_10.vti_scaled.vti",
+    "../../cloud_data/qr/qr_20.vti_scaled.vti",
+    "../../cloud_data/qr/qr_30.vti_scaled.vti",
+    "../../cloud_data/ua/ua_10.vti_scaled.vti",
+    "../../cloud_data/ua/ua_20.vti_scaled.vti",
+    "../../cloud_data/ua/ua_30.vti_scaled.vti",
+    "../../cloud_data/va/va_10.vti_scaled.vti",
+    "../../cloud_data/va/va_20.vti_scaled.vti",
+    "../../cloud_data/va/va_30.vti_scaled.vti",
+    "../../cloud_data/wa/wa_10.vti_scaled.vti",
+    "../../cloud_data/wa/wa_20.vti_scaled.vti",
+    "../../cloud_data/wa/wa_30.vti_scaled.vti",
     
 };
 
@@ -42,37 +42,35 @@ void readImageData(vtkSmartPointer<vtkXMLImageDataReader> &reader, std::string f
 void getColorCorrespondingTovalue(double val, double &r, double &g, double &b);
 
 int main(int argc, char* argv[]) {
-    // Verify number of input arguments
-    if (argc != 2) {
-        std::cout << "Usage: " << argv[0] << " Filename.vti" << std::endl;
-        return EXIT_FAILURE;
+    
+    int lol = 0;
+    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+    for (auto file: files) {
+        if (lol++) continue; // Only first
+        std::cerr << "Adding " << file << "...";
+        
+        vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
+        readImageData(reader, file);
+        
+        // Visualising
+        vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+        mapper->SetInputConnection(reader->GetOutputPort());
+        
+        // Create actor for mapper
+        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+        actor->SetMapper(mapper);
+        actor->GetProperty()->SetRepresentationToWireframe();
+        
+        // Create renderer, add actor to it, set background
+        renderer->AddActor(actor);
+        
+        std::cerr << "done" << std::endl;
     }
     
-    // Reading the file
-    std::string fileName = argv[1];
-    vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    readImageData(reader, fileName);
-    
-    
-    
-    
-    // Visualising
-    vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-    mapper->SetInputConnection(reader->GetOutputPort());
-    
-    // Create actor for mapper
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-    actor->GetProperty()->SetRepresentationToWireframe();
-    
-    // Create renderer, add actor to it, set background
-    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-    renderer->AddActor(actor);
     renderer->ResetCamera();
     renderer->SetBackground(1, 1, 1);
     
-    // Create render window to show renderer
-    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     renderWindow->AddRenderer(renderer);
     
     // Create render window interactor to interact with renderer
