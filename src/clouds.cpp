@@ -1,64 +1,55 @@
-#include "vtkCylinderSource.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkProperty.h"
-#include "vtkCamera.h"
-#include "vtkSmartPointer.h"
+#include <vtkSmartPointer.h>
+#include <vtkProperty.h>
+#include <vtkDataSetMapper.h>
+#include <vtkImageActor.h>
+#include <vtkImageViewer2.h>
+#include <vtkXMLImageDataReader.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
  
-int main()
-{
-	// This creates a polygonal cylinder model with eight circumferential facets
-	// (i.e, in practice an octagonal prism).
-	vtkSmartPointer<vtkCylinderSource> cylinder =
-		vtkSmartPointer<vtkCylinderSource>::New();
-	cylinder->SetResolution(8);
-
-	// The mapper is responsible for pushing the geometry into the graphics library.
-	// It may also do color mapping, if scalars or other attributes are defined.
-	vtkSmartPointer<vtkPolyDataMapper> cylinderMapper =
-		vtkSmartPointer<vtkPolyDataMapper>::New();
-	cylinderMapper->SetInputConnection(cylinder->GetOutputPort());
-
-	// The actor is a grouping mechanism: besides the geometry (mapper), it
-	// also has a property, transformation matrix, and/or texture map.
-	// Here we set its color and rotate it around the X and Y axes.
-	vtkSmartPointer<vtkActor> cylinderActor =
-		vtkSmartPointer<vtkActor>::New();
-	cylinderActor->SetMapper(cylinderMapper);
-	cylinderActor->GetProperty()->SetColor(1.0000, 0.3882, 0.2784);
-	cylinderActor->RotateX(30.0);
-	cylinderActor->RotateY(-45.0);
-
-	// The renderer generates the image
-	// which is then displayed on the render window.
-	// It can be thought of as a scene to which the actor is added
-	vtkSmartPointer<vtkRenderer> renderer =
-		vtkSmartPointer<vtkRenderer>::New();
-	renderer->AddActor(cylinderActor);
-	renderer->SetBackground(0.1, 0.2, 0.4);
-	// Zoom in a little by accessing the camera and invoking its "Zoom" method.
-	renderer->ResetCamera();
-	renderer->GetActiveCamera()->Zoom(1.5);
-
-	// The render window is the actual GUI window
-	// that appears on the computer screen
-	vtkSmartPointer<vtkRenderWindow> renderWindow =
-		vtkSmartPointer<vtkRenderWindow>::New();
-	renderWindow->SetSize(200, 200);
-	renderWindow->AddRenderer(renderer);
-
-	// The render window interactor captures mouse events
-	// and will perform appropriate camera or actor manipulation
-	// depending on the nature of the events.
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-		vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	renderWindowInteractor->SetRenderWindow(renderWindow);
-
-	// This starts the event loop and as a side effect causes an initial render.
-	renderWindowInteractor->Start();
-
-	return 0;
+int main(int argc, char* argv[]) {
+    // Verify number of input arguments
+    if (argc != 2) {
+        std::cout << "Usage: " << argv[0] << " Filename.vti" << std::endl;
+        return EXIT_FAILURE;
+    }
+    
+    // Get filename from cli arguments
+    std::string inputFilename = argv[1];
+    
+    // Read the file
+    vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
+    reader->SetFileName(inputFilename.c_str());
+    reader->Update();
+    
+    // Visualize
+    vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+    mapper->SetInputConnection(reader->GetOutputPort());
+    
+    // Create actor for mapper
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetRepresentationToWireframe();
+    
+    // Create renderer, add actor to it, set background
+    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+    renderer->AddActor(actor);
+    renderer->ResetCamera();
+    renderer->SetBackground(1, 1, 1);
+    
+    // Create render window to show renderer
+    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+    renderWindow->AddRenderer(renderer);
+    
+    // Create render window interactor to interact with renderer
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    renderWindowInteractor->SetRenderWindow(renderWindow);
+    renderWindowInteractor->Initialize();
+    
+    // Start the window
+    renderWindowInteractor->Start();
+    
+    return EXIT_SUCCESS;
 }
+
