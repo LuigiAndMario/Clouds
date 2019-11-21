@@ -4,6 +4,8 @@
 #include <vtkImageActor.h>
 #include <vtkImageViewer2.h>
 #include <vtkXMLImageDataReader.h>
+#include <vtkImageDataToPointSet.h>
+#include <vtkImageData.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
@@ -49,13 +51,19 @@ int main(int argc, char* argv[]) {
     for (auto file: files) {
         if (lol++) continue; // Only first
         std::cerr << "Adding " << file << "...";
-        
+
+        // Read data from file
         vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
         readImageData(reader, file);
-        
-        // Visualising
+
+        // Convert to point set
+        vtkSmartPointer<vtkImageDataToPointSet> imageDataToPointSet = vtkSmartPointer<vtkImageDataToPointSet>::New();
+        imageDataToPointSet->SetInputData(reader->GetOutput());
+        imageDataToPointSet->Update();
+
+        // Visualising point set
         vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-        mapper->SetInputConnection(reader->GetOutputPort());
+        mapper->SetInputData(imageDataToPointSet->GetOutput());
         
         // Create actor for mapper
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
