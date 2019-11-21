@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     // Create renderer, add actor to it, set background
     vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
     renderer->AddActor(actor);
-    rederer->ResetCamera();
+    renderer->ResetCamera();
     renderer->SetBackground(1, 1, 1);
 
     // Create render window to show renderer
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     // Create render window interactor to interact with renderer
     vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     renderWindowInteractor->SetRenderWindow(renderWindow);
-    renderWindowInteractor->Initalize();
+    renderWindowInteractor->Initialize();
 
     // Start the window
     renderWindowInteractor->Start();
