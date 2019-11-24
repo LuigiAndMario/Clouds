@@ -49,10 +49,9 @@ int main(int, char *[]) {
     // colorImage->Print(std::cerr);
     colorImage = reader->GetOutput();
     colorImage->AllocateScalars(VTK_FLOAT, 3);
-    colorImage->Print(std::cerr);
 
     vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
-    imageResliceMapper->SetInputConnection(reader->GetOutputPort());
+    imageResliceMapper->SetInputData(colorImage);
 
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
     imageSlice->SetMapper(imageResliceMapper);
@@ -65,7 +64,7 @@ int main(int, char *[]) {
 
     // Setup render window
     vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->SetSize(300, 300);
+    renderWindow->SetSize(1500, 1000);
     renderWindow->AddRenderer(renderer);
 
     // Setup render window interactor
