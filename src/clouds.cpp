@@ -1,14 +1,11 @@
-#include <vtkSmartPointer.h>
-#include <vtkProperty.h>
-#include <vtkDataSetMapper.h>
-#include <vtkImageActor.h>
-#include <vtkImageViewer2.h>
+#include <vtkVersion.h>
 #include <vtkXMLImageDataReader.h>
 #include <vtkImageData.h>
+#include <vtkSmartPointer.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkInteractorStyleImage.h>
 #include <vtkRenderer.h>
-
 #include <vtkImageMapper.h>
 #include <vtkImageResliceMapper.h>
 #include <vtkImageSlice.h>
@@ -18,8 +15,8 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 
-#include <vtkPolyDataMapper.h>
-#include <vtkImageDataGeometryFilter.h>
+#include <vtkImageResize.h>
+#include <vtkImageSliceMapper.h>
 
 static const std::string files[] = {
     "../../cloud_data/cli/cli_10.vti_scaled.vti",
@@ -54,101 +51,52 @@ int main(int, char *[]) {
     reader->Update();
     std::cerr << " done" << std::endl;
 
-    /*
-    // Visualize
-    vtkSmartPointer<vtkDataSetMapper> mapper =
-        vtkSmartPointer<vtkDataSetMapper>::New();
-    mapper->SetInputConnection(reader->GetOutputPort());
-    */
-
-    // Convert image to polydata
-    std::cerr << "Converting to polydata...";
-    vtkSmartPointer<vtkImageDataGeometryFilter> imageDataGeometryFilter = vtkSmartPointer<vtkImageDataGeometryFilter>::New();
-    imageDataGeometryFilter->SetInputConnection(reader->GetOutputPort());
-    imageDataGeometryFilter->Update();
-    std::cerr << " done" << std::endl;
-
-    // Create mapper and actor
-    std::cerr << "Creating poly data mapper...";
-    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(imageDataGeometryFilter->GetOutputPort());
-    std::cerr << " done" << std::endl;
-    
-    
-    vtkSmartPointer<vtkImageData> colorImage = vtkSmartPointer<vtkImageData>::New();
-    colorImage = reader->GetOutput();
-    colorImage->AllocateScalars(VTK_FLOAT, 3);
-    
-    std::cerr << "Slicing shit up...";
-    vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
-    imageResliceMapper->SetInputData(colorImage);
-    
-    vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
-    imageSlice->SetMapper(imageResliceMapper);
-    std::cerr << " done" << std::endl;
-    
-
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-
-    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-    // renderer->AddActor(actor);
-    renderer->AddActor(imageSlice);
-    renderer->SetBackground(1,1,1);
-
-    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->AddRenderer(renderer);
-    renderWindow->SetSize(1500, 1000);
-
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    renderWindowInteractor->SetRenderWindow(renderWindow);
-    renderWindowInteractor->Initialize();
-
-    renderWindow->Render();
-    renderWindowInteractor->Start();
-
-    return EXIT_SUCCESS;
-
-/*
     vtkSmartPointer<vtkImageData> colorImage = vtkSmartPointer<vtkImageData>::New();
 //    colorImage->Print(std::cerr);
     colorImage = reader->GetOutput();
     colorImage->AllocateScalars(VTK_FLOAT, 3);
-    colorImage->Print(std::cerr);
 
-    vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
-    imageResliceMapper->SetInputData(colorImage);
-
+    std::cerr << "Slicing...";
+    vtkSmartPointer<vtkImageSliceMapper> imageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+    imageSliceMapper->SetInputData(colorImage);
+    imageSliceMapper->Update();
+    imageSliceMapper->SetSliceNumber(74); // Trying out some specific slice
+    imageSliceMapper->Print(std::cerr);
+    
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
-    imageSlice->SetMapper(imageResliceMapper);
+    imageSlice->SetMapper(imageSliceMapper);
+    imageSlice->Update();
+    std::cerr << " done" << std::endl;
+    
 
     // Setup renderers
     vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-    renderer->AddViewProp(imageSlice);
-    // renderer->ResetCamera();
-    // renderer->SetBackground(1, 1, 1);
+//    renderer->AddViewProp(imageSlice);
+    renderer->AddActor(imageSlice);
+    renderer->ResetCamera();
+    renderer->SetBackground(0, 0, 0);
     
     ////////////////////////////////////
     /// Debugging by displaying a sphere
     // Create a sphere
-    vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
-    
-    vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-    sphereSource->SetCenter(0.0, 0.0, 0.0);
-    sphereSource->SetRadius(1.0);
-    // Make the surface smooth.
-    sphereSource->SetPhiResolution(100);
-    sphereSource->SetThetaResolution(100);
-    
-    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(sphereSource->GetOutputPort());
-    
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-    actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
-    
-    renderer->AddActor(actor);
-    renderer->SetBackground(colors->GetColor3d("DarkGreen").GetData());
+//    vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
+//
+//    vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+//    sphereSource->SetCenter(0.0, 0.0, 0.0);
+//    sphereSource->SetRadius(1.0);
+//    // Make the surface smooth.
+//    sphereSource->SetPhiResolution(100);
+//    sphereSource->SetThetaResolution(100);
+//
+//    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+//    mapper->SetInputConnection(sphereSource->GetOutputPort());
+//
+//    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+//    actor->SetMapper(mapper);
+//    actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
+//
+//    renderer->AddActor(actor);
+//    renderer->SetBackground(colors->GetColor3d("DarkGreen").GetData());
     /////////////////////////////////////
 
     // Setup render window
@@ -157,11 +105,10 @@ int main(int, char *[]) {
     renderWindow->AddRenderer(renderer);
 
     // Setup render window interactor
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-        vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
     vtkSmartPointer<vtkInteractorStyleImage> style = vtkSmartPointer<vtkInteractorStyleImage>::New();
-
+    style->SetInteractionModeToImageSlicing();
     renderWindowInteractor->SetInteractorStyle(style);
 
     // Render and start interaction
@@ -171,5 +118,4 @@ int main(int, char *[]) {
     renderWindowInteractor->Start();
 
     return EXIT_SUCCESS;
-*/
 }
