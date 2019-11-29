@@ -51,17 +51,17 @@ int main(int, char *[]) {
     reader->Update();
     std::cerr << " done" << std::endl;
 
-    vtkSmartPointer<vtkImageData> colorImage = vtkSmartPointer<vtkImageData>::New();
-//    colorImage->Print(std::cerr);
-    colorImage = reader->GetOutput();
-    colorImage->AllocateScalars(VTK_FLOAT, 3);
+    vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
+//    image->Print(std::cerr);
+    image = reader->GetOutput();
+    image->AllocateScalars(VTK_FLOAT, 3);
 
     std::cerr << "Slicing...";
     vtkSmartPointer<vtkImageSliceMapper> imageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
-    imageSliceMapper->SetInputData(colorImage);
+    imageSliceMapper->SetInputData(image);
     imageSliceMapper->Update();
-    imageSliceMapper->SetSliceNumber(74); // Trying out some specific slice
-    imageSliceMapper->Print(std::cerr);
+//    imageSliceMapper->SetSliceNumber(74); // Trying out some specific slice
+//    imageSliceMapper->Print(std::cerr);
     
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
     imageSlice->SetMapper(imageSliceMapper);
