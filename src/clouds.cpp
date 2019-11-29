@@ -10,6 +10,10 @@
 #include <vtkImageResliceMapper.h>
 #include <vtkImageSlice.h>
 
+#include <vtkSphereSource.h>
+#include <vtkNamedColors.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
 
 static const std::string files[] = {
     "../../cloud_data/cli/cli_10.vti_scaled.vti",
@@ -36,17 +40,16 @@ static const std::string files[] = {
     
 };
 
-static void CreateColorImage(vtkImageData*);
-
 int main(int, char *[]) {
     // Read file
+    std::cerr << "Reading file " << files[0] << "...";
     vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
     reader->SetFileName(files[0].c_str());
     reader->Update();
+    std::cerr << " done" << std::endl;
 
     vtkSmartPointer<vtkImageData> colorImage = vtkSmartPointer<vtkImageData>::New();
-    // CreateColorImage(colorImage);
-    // colorImage->Print(std::cerr);
+//    colorImage->Print(std::cerr);
     colorImage = reader->GetOutput();
     colorImage->AllocateScalars(VTK_FLOAT, 3);
 
@@ -59,8 +62,31 @@ int main(int, char *[]) {
     // Setup renderers
     vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
     renderer->AddViewProp(imageSlice);
-    renderer->ResetCamera();
-    renderer->SetBackground(1, 1, 1);
+    // renderer->ResetCamera();
+    // renderer->SetBackground(1, 1, 1);
+    
+    ////////////////////////////////////
+    /// Debugging by displaying a sphere
+    // Create a sphere
+    vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
+    
+    vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+    sphereSource->SetCenter(0.0, 0.0, 0.0);
+    sphereSource->SetRadius(1.0);
+    // Make the surface smooth.
+    sphereSource->SetPhiResolution(100);
+    sphereSource->SetThetaResolution(100);
+    
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(sphereSource->GetOutputPort());
+    
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
+    
+    renderer->AddActor(actor);
+    renderer->SetBackground(colors->GetColor3d("DarkGreen").GetData());
+    /////////////////////////////////////
 
     // Setup render window
     vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
@@ -71,8 +97,7 @@ int main(int, char *[]) {
     vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
         vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
-    vtkSmartPointer<vtkInteractorStyleImage> style =
-        vtkSmartPointer<vtkInteractorStyleImage>::New();
+    vtkSmartPointer<vtkInteractorStyleImage> style = vtkSmartPointer<vtkInteractorStyleImage>::New();
 
     renderWindowInteractor->SetInteractorStyle(style);
 
@@ -84,17 +109,3 @@ int main(int, char *[]) {
 
     return EXIT_SUCCESS;
 }
-
-void CreateColorImage(vtkImageData* image) {
-    image->SetDimensions(10, 10, 1);
-    image->AllocateScalars(VTK_UNSIGNED_CHAR,3);
-    for(unsigned int x = 0; x < 10; x++) {
-        for(unsigned int y = 0; y < 10; y++) {
-            unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x,y,0));
-            pixel[0] = 255;
-            pixel[1] = 0;
-            pixel[2] = 255;
-        }
-    }
-}
-
