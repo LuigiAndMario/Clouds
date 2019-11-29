@@ -1,11 +1,13 @@
-#include <vtkVersion.h>
-#include <vtkXMLImageDataReader.h>
-#include <vtkImageData.h>
 #include <vtkSmartPointer.h>
+#include <vtkProperty.h>
+#include <vtkDataSetMapper.h>
+#include <vtkImageActor.h>
+#include <vtkImageViewer2.h>
+#include <vtkXMLImageDataReader.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkInteractorStyleImage.h>
 #include <vtkRenderer.h>
+
 #include <vtkImageMapper.h>
 #include <vtkImageResliceMapper.h>
 #include <vtkImageSlice.h>
@@ -14,6 +16,9 @@
 #include <vtkNamedColors.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+
+#include <vtkPolyDataMapper.h>
+#include <vtkImageDataGeometryFilter.h>
 
 static const std::string files[] = {
     "../../cloud_data/cli/cli_10.vti_scaled.vti",
@@ -42,16 +47,62 @@ static const std::string files[] = {
 
 int main(int, char *[]) {
     // Read file
-    std::cerr << "Reading file " << files[0] << "...";
+    std::cerr << "reading data...";
     vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
     reader->SetFileName(files[0].c_str());
     reader->Update();
-    std::cerr << " done" << std::endl;
+    std::cerr << " [done]" << std::endl;
 
+    /*
+    // Visualize
+    vtkSmartPointer<vtkDataSetMapper> mapper =
+        vtkSmartPointer<vtkDataSetMapper>::New();
+    mapper->SetInputConnection(reader->GetOutputPort());
+    */
+
+    // Covert image to polydata
+    std::cerr << "converting to polydata";
+    vtkSmartPointer<vtkImageDataGeometryFilter> imageDataGeometryFilter = vtkSmartPointer<vtkImageDataGeometryFilter>::New();
+    imageDataGeometryFilter->SetInputConnection(reader->GetOutputPort());
+    imageDataGeometryFilter->Update();
+    std::cerr << " [done]" << std::endl;
+
+    // Create mapper and actor
+    std::cerr << "creating poly data mapper";
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(imageDataGeometryFilter->GetOutputPort());
+    std::cerr << " [done]" << std::endl;
+
+    vtkSmartPointer<vtkActor> actor =
+        vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    vtkSmartPointer<vtkRenderer> renderer =
+        vtkSmartPointer<vtkRenderer>::New();
+    renderer->AddActor(actor);
+    renderer->SetBackground(1,1,1);
+
+    vtkSmartPointer<vtkRenderWindow> renderWindow =
+        vtkSmartPointer<vtkRenderWindow>::New();
+    renderWindow->AddRenderer(renderer);
+    renderWindow->SetSize(1500, 1000);
+
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+        vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    renderWindowInteractor->SetRenderWindow(renderWindow);
+    renderWindowInteractor->Initialize();
+
+    renderWindow->Render();
+    renderWindowInteractor->Start();
+
+    return EXIT_SUCCESS;
+
+/*
     vtkSmartPointer<vtkImageData> colorImage = vtkSmartPointer<vtkImageData>::New();
 //    colorImage->Print(std::cerr);
     colorImage = reader->GetOutput();
     colorImage->AllocateScalars(VTK_FLOAT, 3);
+    colorImage->Print(std::cerr);
 
     vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
     imageResliceMapper->SetInputData(colorImage);
@@ -108,4 +159,5 @@ int main(int, char *[]) {
     renderWindowInteractor->Start();
 
     return EXIT_SUCCESS;
+*/
 }
