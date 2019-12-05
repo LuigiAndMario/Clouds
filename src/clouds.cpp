@@ -5,6 +5,9 @@
 // Reading
 #include <vtkXMLImageDataReader.h>
 
+// Interaction
+#include <vtkInteractorStyleTrackballCamera.h>
+
 #include <vtkActor.h>
 #include <vtkArrowSource.h>
 #include <vtkAssignAttribute.h>
@@ -41,8 +44,7 @@ static const std::string files[] = {
     "../../cloud_data/va/va_30.vti_scaled.vti",
     "../../cloud_data/wa/wa_10.vti_scaled.vti",
     "../../cloud_data/wa/wa_20.vti_scaled.vti",
-    "../../cloud_data/wa/wa_30.vti_scaled.vti",
-    
+    "../../cloud_data/wa/wa_30.vti_scaled.vti"
 };
 
 
@@ -147,11 +149,8 @@ int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     renderWindow->AddRenderer(renderer);
     
-    renderer->ResetCamera();
-    vtkCamera *camera = renderer->GetActiveCamera();
-    camera->Elevation(-80.0);
-    camera->OrthogonalizeViewUp();
-    camera->Azimuth(135.0);
+    vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+    renderWindowInteractor->SetInteractorStyle(style);
     
     renderWindowInteractor->SetRenderWindow(renderWindow);
     renderWindowInteractor->Initialize();
