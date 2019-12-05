@@ -1,3 +1,5 @@
+#define DEBUG (false)
+
 #include <vtkVersion.h>
 #include <vtkXMLImageDataReader.h>
 #include <vtkImageData.h>
@@ -9,19 +11,39 @@
 #include <vtkRenderer.h>
 #include <vtkDataSetMapper.h>
 #include <vtkImageMapper.h>
-#include <vtkImageResliceMapper.h>
 #include <vtkImageSlice.h>
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
 
-#include <vtkSphereSource.h>
 #include <vtkNamedColors.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkImageProperty.h>
 
-#include <vtkImageResize.h>
 #include <vtkImageSliceMapper.h>
 #include <vtkInteractorStyleTrackballCamera.h>
+
+// Slider
+#include <vtkSliderWidget.h>
+#include <vtkSliderRepresentation.h>
+#include <vtkSliderRepresentation2D.h>
+#include <vtkProperty2D.h>
+#include <vtkTextProperty.h>
+
+// Callback for the slider interaction
+class vtkSliderCallback : public vtkCommand {
+public:
+    static vtkSliderCallback *New() {
+        return new vtkSliderCallback;
+    }
+    virtual void Execute(vtkObject *caller, unsigned long, void*) {
+        vtkSliderWidget *sliderWidget = reinterpret_cast<vtkSliderWidget*>(caller);
+        if (sliceMapper)
+            sliceMapper->SetSliceNumber(static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue());
+    }
+    vtkSliderCallback() : sliceMapper(0) {}
+    vtkSmartPointer<vtkImageSliceMapper> sliceMapper;
+};
 
 static const std::string files[] = {
     "../../cloud_data/cli/cli_10.vti_scaled.vti",
@@ -53,15 +75,15 @@ void getColorCorrespondingToValue(double min, double max, double range, double n
                                   double val, double &r, double &g, double &b) {
     static const int numColorNodes = 9;
 	double color[numColorNodes][3] = {
-		0.6980, 0.0941, 0.1686, // Red
-		0.8392, 0.3765, 0.3020,
-		0.9569, 0.6471, 0.5098,
-		0.9922, 0.8588, 0.7804,
-		0.9686, 0.9686, 0.9686, // White
-		0.8196, 0.8980, 0.9412,
-		0.5725, 0.7725, 0.8706,
-		0.2627, 0.5765, 0.7647,
-		0.1294, 0.4000, 0.6745  // Blue
+        {0.6980, 0.0941, 0.1686}, // Red
+        {0.8392, 0.3765, 0.3020},
+        {0.9569, 0.6471, 0.5098},
+        {0.9922, 0.8588, 0.7804},
+        {0.9686, 0.9686, 0.9686}, // White
+        {0.8196, 0.8980, 0.9412},
+        {0.5725, 0.7725, 0.8706},
+        {0.2627, 0.5765, 0.7647},
+        {0.1294, 0.4000, 0.6745}  // Blue
 	};
 
 	for (int i = 0; i < (numColorNodes - 1); i++) {
@@ -78,24 +100,49 @@ void getColorCorrespondingToValue(double min, double max, double range, double n
 }
 
 int main(int, char *[]) {
-    // Read file
-    std::cerr << "Reading file " << files[0] << "...";
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating the renderer and window interactor
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+    renderWindow->SetSize(1500, 1000);
+    
+    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+    renderer->SetBackground(1, 1, 1);
+    renderWindow->AddRenderer(renderer);
+    
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    renderWindowInteractor->SetRenderWindow(renderWindow);
+    renderer->SetBackground(1, 1, 1);
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Reading the file
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    std::string file = files[0];
+    cerr << "Reading file " << file << "...";
     vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    reader->SetFileName(files[0].c_str());
+    reader->SetFileName(file.c_str());
     reader->Update();
-    std::cerr << " done" << std::endl;
+    cerr << " done" << endl;
 
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating the image and lookup table
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Creating the image and lookup table...";
     vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
     image = reader->GetOutput();
-    //image->AllocateScalars(VTK_FLOAT, 3);
+    image->AllocateScalars(VTK_FLOAT, 3);
 
     // Get image values range
-    image->Print(std::cerr);
+    if (DEBUG) image->Print(cerr);
     float valuesRange[2];
+    /// WARNING: Following only works for .cli files
     vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("cli"))->GetValueRange(valuesRange);
 
     double min = valuesRange[0];
     double max = valuesRange[1];
+    if (DEBUG) cerr << "min = " << min << ", max = " << max << endl;
     double range = max-min;
     double numColors = 100;
 
@@ -110,72 +157,78 @@ int main(int, char *[]) {
         lookupTable->SetTableValue(i, r, g, b);
     }
     lookupTable->Build();
+    cerr << " done" << endl;
 
-    vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-    mapper->SetInputData(reader->GetOutput());
-    mapper->SetLookupTable(lookupTable);
-
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-    actor->GetProperty()->SetRepresentationToWireframe();
-
-    /*
-    std::cerr << "Slicing...";
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Slicing
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Slicing...";
     vtkSmartPointer<vtkImageSliceMapper> imageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
     imageSliceMapper->SetInputData(image);
-    imageSliceMapper->SetLookupTable(lookupTable);
+    imageSliceMapper->SetSliceNumber(74); // Starting with a nice slice
     imageSliceMapper->Update();
-//    imageSliceMapper->SetSliceNumber(74); // Trying out some specific slice
-//    imageSliceMapper->Print(std::cerr);
+    if (DEBUG) imageSliceMapper->Print(cerr);
     
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
     imageSlice->SetMapper(imageSliceMapper);
+    imageSlice->GetProperty()->SetLookupTable(lookupTable);
+//    imageSlice->ForceTranslucentOn();
     imageSlice->Update();
-    std::cerr << " done" << std::endl;
-    */
+    cerr << " done" << endl;
     
 
-    // Setup renderers
-    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-//    renderer->AddViewProp(imageSlice);
-    // renderer->AddActor(imageSlice);
-    renderer->AddActor(actor);
-    renderer->ResetCamera();
-    renderer->SetBackground(0, 0, 0);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating the slider
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Creating the slider...";
+    vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+    sliderRep->SetMinimumValue(imageSliceMapper->GetSliceNumberMinValue());
+    sliderRep->SetMaximumValue(imageSliceMapper->GetSliceNumberMaxValue() - 1);
+    sliderRep->SetValue(74); // Starting with the same nice slice as before
+    sliderRep->SetTitleText("Slice selection");
+    // set color properties
+    sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
+    sliderRep->GetTitleProperty()->SetColor(0, 0, 0);            // Change the color of the text indicating what the slider controls
+    sliderRep->GetLabelProperty()->SetColor(0, 0, 0.4);            // Change the color of the text displaying the value
+    sliderRep->GetSelectedProperty()->SetColor(0.4, 0.8, 0.4);    // Change the color of the knob when the mouse is held on it
+    sliderRep->GetTubeProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the bar
+    sliderRep->GetCapProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the ends of the bar
+    // set position of the slider
+    sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+    sliderRep->GetPoint1Coordinate()->SetValue(40, 40);
+    sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+    sliderRep->GetPoint2Coordinate()->SetValue(240, 40);
+    vtkSmartPointer<vtkSliderWidget> sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
+    sliderWidget->SetInteractor(renderWindowInteractor);
+    sliderWidget->SetRepresentation(sliderRep);
+    sliderWidget->SetAnimationModeToAnimate();
     
-    ////////////////////////////////////
-    /// Debugging by displaying a sphere
-    // Create a sphere
-//    vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
-//
-//    vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-//    sphereSource->SetCenter(0.0, 0.0, 0.0);
-//    sphereSource->SetRadius(1.0);
-//    // Make the surface smooth.
-//    sphereSource->SetPhiResolution(100);
-//    sphereSource->SetThetaResolution(100);
-//
-//    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-//    mapper->SetInputConnection(sphereSource->GetOutputPort());
-//
-//    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-//    actor->SetMapper(mapper);
-//    actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
-//
-//    renderer->AddActor(actor);
-//    renderer->SetBackground(colors->GetColor3d("DarkGreen").GetData());
-    /////////////////////////////////////
+    // create the callback
+    vtkSmartPointer<vtkSliderCallback> callback = vtkSmartPointer<vtkSliderCallback>::New();
+    callback->sliceMapper = imageSliceMapper;
+    sliderWidget->AddObserver(vtkCommand::InteractionEvent, callback);
+    
+    sliderWidget->EnabledOn();
+    cerr << " done" << endl;
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Setting up the renderers
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Setting up the renderers...";
+    renderer->AddViewProp(imageSlice);
+    renderer->AddActor(imageSlice);
+    renderer->ResetCamera();
+    renderer->SetBackground(1, 1, 1);
 
     // Setup render window
-    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->SetSize(1500, 1000);
     renderWindow->AddRenderer(renderer);
 
     // Setup render window interactor
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-
     vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
     renderWindowInteractor->SetInteractorStyle(style);
+    cerr << " done" << endl;
 
     // Render and start interaction
     renderWindowInteractor->SetRenderWindow(renderWindow);
