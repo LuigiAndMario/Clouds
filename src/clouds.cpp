@@ -1,4 +1,4 @@
-#define DEBUG (true)
+#define DEBUG (false)
 
 #include <vtkVersion.h>
 #include <vtkXMLImageDataReader.h>
@@ -75,15 +75,12 @@ void getColorCorrespondingToValue(double min, double max, double range, double n
                                   double val, double &r, double &g, double &b) {
     static const int numColorNodes = 9;
 	double color[numColorNodes][3] = {
-        {0.6980, 0.0941, 0.1686}, // Red
-        {0.8392, 0.3765, 0.3020},
-        {0.9569, 0.6471, 0.5098},
-        {0.9922, 0.8588, 0.7804},
-        {0.9686, 0.9686, 0.9686}, // White
-        {0.8196, 0.8980, 0.9412},
-        {0.5725, 0.7725, 0.8706},
-        {0.2627, 0.5765, 0.7647},
-        {0.1294, 0.4000, 0.6745}  // Blue
+        {0.0314, 0.3176, 0.6118}, // Blue
+        {0.1922, 0.5098, 0.7412},
+        {0.4196, 0.6824, 0.8392},
+        {0.6196, 0.7922, 0.8824},
+        {0.7765, 0.8588, 0.9373},
+        {0.9373, 0.9529, 1.0000} // White
 	};
 
 	for (int i = 0; i < (numColorNodes - 1); i++) {
@@ -162,8 +159,10 @@ int main(int, char *[]) {
     }
     lookupTable->SetRange(min, max);
     lookupTable->Build();
-    cerr << endl << endl;
-    lookupTable->Print(cerr);
+    if (DEBUG) {
+        cerr << endl << endl;
+        lookupTable->Print(cerr);
+    }
     cerr << " done" << endl;
 
     
@@ -186,7 +185,10 @@ int main(int, char *[]) {
     imageSlice->GetProperty()->UseLookupTableScalarRangeOn();
 //    imageSlice->ForceTranslucentOn();
     imageSlice->Update();
-    imageSlice->Print(cerr);
+    if (DEBUG) {
+        cerr << endl;
+        imageSlice->Print(cerr);
+    }
     cerr << " done" << endl;
     
 
