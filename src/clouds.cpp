@@ -1,5 +1,9 @@
 #define DEBUG (false)
 
+// STL
+#include <vector>
+
+// VTK general
 #include <vtkVersion.h>
 #include <vtkXMLImageDataReader.h>
 #include <vtkImageData.h>
@@ -15,11 +19,13 @@
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
 
+// Colour
 #include <vtkNamedColors.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkImageProperty.h>
 
+// Slicing
 #include <vtkImageSliceMapper.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 
@@ -28,6 +34,14 @@
 #include <vtkSliderRepresentation.h>
 #include <vtkSliderRepresentation2D.h>
 #include <vtkProperty2D.h>
+#include <vtkTextProperty.h>
+
+// Button
+#include <vtkButtonWidget.h>
+#include <vtkTexturedButtonRepresentation2D.h>
+
+// Text
+#include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 
 // Callback for the slider interaction
@@ -43,6 +57,59 @@ public:
     }
     vtkSliderCallback() : sliceMapper(0) {}
     vtkSmartPointer<vtkImageSliceMapper> sliceMapper;
+};
+
+// Callback for the button interaction
+class vtkButtonCallback : public vtkCommand {
+public:
+    static vtkButtonCallback *New() {
+        return new vtkButtonCallback;
+    }
+    virtual void Execute(vtkObject *caller, unsigned long, void*) {
+        vtkSmartPointer<vtkButtonWidget> buttonWidget = reinterpret_cast<vtkButtonWidget*>(caller);
+        int state = buttonWidget->GetSliderRepresentation()->GetState();
+        if (state == 0) {
+            // disable time _30
+            renderer->RemoveActor(imageSlices[2]);
+            renderer->RemoveActor2D(texts[2]);
+            sliderWidgets[2]->EnabledOff();
+            
+            // enable time _10
+            renderer->AddActor(imageSlices[0]);
+            renderer->AddActor2D(texts[0]);
+            sliderWidgets[0]->EnabledOn();
+        } else if (state == 1) {
+            // disable time _10
+            renderer->RemoveActor(imageSlices[0]);
+            renderer->RemoveActor2D(texts[0]);
+            sliderWidgets[0]->EnabledOff();
+            
+            // enable time _20
+            renderer->AddActor(imageSlices[1]);
+            renderer->AddActor2D(texts[1]);
+            sliderWidgets[1]->EnabledOn();
+        } else {
+            // disable time _20
+            renderer->RemoveActor(imageSlices[1]);
+            renderer->RemoveActor2D(texts[1]);
+            sliderWidgets[1]->EnabledOff();
+            
+            // enable time _30
+            renderer->AddActor(imageSlices[2]);
+            renderer->AddActor2D(texts[2]);
+            sliderWidgets[2]->EnabledOn();
+        }
+        
+    }
+    vtkButtonCallback() : sliderWidgets(std::vector<vtkSmartPointer<vtkSliderWidget>>(0)), imageSlices(std::vector<vtkSmartPointer<vtkImageSlice>>(0)), renderer(0), actor(0), renderWindow(0), renderWindowInteractor(0), styleTrackball(0), texts(std::vector<vtkSmartPointer<vtkTextActor>>(0)){}
+    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets;
+    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices;
+    vtkSmartPointer<vtkRenderer> renderer;
+    vtkSmartPointer<vtkActor> actor;
+    vtkSmartPointer<vtkRenderWindow> renderWindow;
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+    vtkSmartPointer<vtkInteractorStyleTrackballCamera> styleTrackball;
+    std::vector<vtkSmartPointer<vtkTextActor>> texts;
 };
 
 static const std::string files[] = {
@@ -96,6 +163,34 @@ void getColorCorrespondingToValue(double min, double max, double range, double n
 	}
 }
 
+void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, unsigned char* color2, unsigned char* color3)
+{
+    // Specify the size of the image data
+    image->SetDimensions(15, 15, 1);
+    image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+    int* dims = image->GetDimensions();
+    
+    // Fill the image with
+    for (int y = 0; y < dims[1]; y++) {
+        for (int x = 0; x < dims[0]; x++) {
+            unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, y, 0));
+            if (x < 5) {
+                pixel[0] = color1[0];
+                pixel[1] = color1[1];
+                pixel[2] = color1[2];
+            } else if (x < 10) {
+                pixel[0] = color2[0];
+                pixel[1] = color2[1];
+                pixel[2] = color2[2];
+            } else {
+                pixel[0] = color3[0];
+                pixel[1] = color3[1];
+                pixel[2] = color3[2];
+            }
+        }
+    }
+}
+
 int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
@@ -111,57 +206,116 @@ int main(int, char *[]) {
     renderWindowInteractor->SetRenderWindow(renderWindow);
     renderer->SetBackground(1, 1, 1);
     
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating the button to select what time slot to display
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Create two images for texture
+    cerr << "Creating the time button...";
+    unsigned char green[3] = { 145,207,96 };
+    unsigned char gray[3] = { 153,153,153 };
+    unsigned char blue[3] = { 89, 85, 250 };
+    vtkSmartPointer<vtkImageData> image1 = vtkSmartPointer<vtkImageData>::New();
+    vtkSmartPointer<vtkImageData> image2 = vtkSmartPointer<vtkImageData>::New();
+    vtkSmartPointer<vtkImageData> image3 = vtkSmartPointer<vtkImageData>::New();
+    CreateImage(image1, green, gray, blue);
+    CreateImage(image2, gray, blue, green);
+    CreateImage(image2, blue, green, gray);
     
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Reading the file
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    std::string file = files[0];
-    cerr << "Reading file " << file << "...";
-    vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    reader->SetFileName(file.c_str());
-    reader->Update();
+    // Create the widget and its representation
+    vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
+    buttonRepresentation->SetNumberOfStates(2);
+    buttonRepresentation->SetButtonTexture(0, image1);
+    buttonRepresentation->SetButtonTexture(1, image2);
+    buttonRepresentation->SetButtonTexture(2, image3);
+    
+    vtkSmartPointer<vtkButtonWidget> buttonWidget = vtkSmartPointer<vtkButtonWidget>::New();
+    buttonWidget->SetInteractor(renderWindowInteractor);
+    buttonWidget->SetRepresentation(buttonRepresentation);
+    
+    
+    // Place the widget. Must be done after a render so that the viewport is defined.
+    // Here the widget placement is in normalized display coordinates
+    vtkSmartPointer<vtkCoordinate> upperLeft = vtkSmartPointer<vtkCoordinate>::New();
+    upperLeft->SetCoordinateSystemToNormalizedDisplay();
+    upperLeft->SetValue(0, 1.0);
+    
+    double bds[6];
+    double sz = 50.0;
+    bds[0] = upperLeft->GetComputedDisplayValue(renderer)[0] - sz;
+    bds[1] = bds[0] + sz;
+    bds[2] = upperLeft->GetComputedDisplayValue(renderer)[1] - sz;
+    bds[3] = bds[2] + sz;
+    bds[4] = bds[5] = 0.0;
+    
+    // Scale to 1, default is .5
+    buttonRepresentation->SetPlaceFactor(1);
+    buttonRepresentation->PlaceWidget(bds);
+    buttonWidget->On();
     cerr << " done" << endl;
     
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Creating the image and lookup table
+    /// Reading the files
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    cerr << "Creating the image and lookup table...";
-    vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
-    image = reader->GetOutput();
-    image->GetPointData()->SetActiveScalars("cli");
-
-    // Get image values range
-    if (DEBUG) {
-        cerr << endl;
-        image->Print(cerr);
+    std::vector<vtkSmartPointer<vtkXMLImageDataReader>> readers(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        std::string file = files[i];
+        cerr << "Reading file " << file << "...";
+        vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
+        reader->SetFileName(file.c_str());
+        reader->Update();
+        
+        readers[i] = reader;
+        cerr << " done" << endl;
     }
-    float valuesRange[2];
-    /// WARNING: Following only works for .cli files
-    vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("cli"))->GetValueRange(valuesRange);
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating the images and lookup tables
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Creating the images and lookup table...";
+    std::vector<vtkSmartPointer<vtkImageData>> images(3);
+    std::vector<vtkSmartPointer<vtkLookupTable>> lookupTables(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
+        image = readers[i]->GetOutput();
+        image->GetPointData()->SetActiveScalars("cli");
+        
+        if (DEBUG) {
+            cerr << endl;
+            image->Print(cerr);
+        }
+        images[i] = image;
 
-    double min = valuesRange[0];
-    double max = valuesRange[1];
-    if (DEBUG) {
-        cerr << "min = " << min << ", max = " << max << endl;
-    }
-    double range = max-min;
-    double numColors = 100;
+        // Get image values range
+        float valuesRange[2];
+        /// WARNING: Following only works for .cli files
+        vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("cli"))->GetValueRange(valuesRange);
 
-    // Create color lookup table
-    vtkSmartPointer<vtkLookupTable> lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-    lookupTable->SetScaleToLinear();
-    lookupTable->SetNumberOfTableValues(numColors);
-    double r, g, b;
-    for (int i = 0; i < numColors; i++) {
-        double val = min + ((double) i / numColors) * range;
-        getColorCorrespondingToValue(min, max, range, numColors, val, r, g, b);
-        lookupTable->SetTableValue(i, r, g, b);
-    }
-    lookupTable->SetRange(min, max);
-    lookupTable->Build();
-    if (DEBUG) {
-        cerr << endl << endl;
-        lookupTable->Print(cerr);
+        double min = valuesRange[0];
+        double max = valuesRange[1];
+        if (DEBUG) {
+            cerr << "min = " << min << ", max = " << max << endl;
+        }
+        double range = max-min;
+        double numColors = 100;
+
+        // Create color lookup table
+        vtkSmartPointer<vtkLookupTable> lookupTable = vtkSmartPointer<vtkLookupTable>::New();
+        lookupTable->SetScaleToLinear();
+        lookupTable->SetNumberOfTableValues(numColors);
+        double r, g, b;
+        for (int i = 0; i < numColors; i++) {
+            double val = min + ((double) i / numColors) * range;
+            getColorCorrespondingToValue(min, max, range, numColors, val, r, g, b);
+            lookupTable->SetTableValue(i, r, g, b);
+        }
+        lookupTable->SetRange(min, max);
+        lookupTable->Build();
+        
+        if (DEBUG) {
+            cerr << endl << endl;
+            lookupTable->Print(cerr);
+        }
+        lookupTables[i] = lookupTable;
     }
     cerr << " done" << endl;
 
@@ -170,60 +324,94 @@ int main(int, char *[]) {
     /// Slicing
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Slicing...";
-    vtkSmartPointer<vtkImageSliceMapper> imageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
-    imageSliceMapper->SetInputData(image);
-    imageSliceMapper->SetSliceNumber(74); // Starting with a nice slice
-    imageSliceMapper->Update();
-    if (DEBUG) {
-        cerr << endl;
-        imageSliceMapper->Print(cerr);
-    }
-    
-    vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
-    imageSlice->SetMapper(imageSliceMapper);
-    imageSlice->GetProperty()->SetLookupTable(lookupTable);
-    imageSlice->GetProperty()->UseLookupTableScalarRangeOn();
-//    imageSlice->ForceTranslucentOn();
-    imageSlice->Update();
-    if (DEBUG) {
-        cerr << endl;
-        imageSlice->Print(cerr);
+    std::vector<vtkSmartPointer<vtkImageSliceMapper>> imageSliceMappers(3);
+    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        vtkSmartPointer<vtkImageSliceMapper> imageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+        imageSliceMapper->SetInputData(images[i]);
+        imageSliceMapper->SetSliceNumber(74); // Starting with a nice slice
+        imageSliceMapper->Update();
+        
+        if (DEBUG) {
+            cerr << endl;
+            imageSliceMapper->Print(cerr);
+        }
+        imageSliceMappers[i] = imageSliceMapper;
+        
+        vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
+        imageSlice->SetMapper(imageSliceMapper);
+        imageSlice->GetProperty()->SetLookupTable(lookupTables[i]);
+        imageSlice->GetProperty()->UseLookupTableScalarRangeOn();
+        imageSlice->Update();
+        
+        if (DEBUG) {
+            cerr << endl;
+            imageSlice->Print(cerr);
+        }
+        imageSlices[i] = imageSlice;
     }
     cerr << " done" << endl;
     
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Creating the slider
+    /// Creating the slice sliders
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    cerr << "Creating the slider...";
-    vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
-    sliderRep->SetMinimumValue(imageSliceMapper->GetSliceNumberMinValue());
-    sliderRep->SetMaximumValue(imageSliceMapper->GetSliceNumberMaxValue());
-    sliderRep->SetValue(74); // Starting with the same nice slice as before
-    sliderRep->SetTitleText("Slice selection");
-    // set color properties
-    sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
-    sliderRep->GetTitleProperty()->SetColor(0, 0, 0);            // Change the color of the text indicating what the slider controls
-    sliderRep->GetLabelProperty()->SetColor(0, 0, 0.4);            // Change the color of the text displaying the value
-    sliderRep->GetSelectedProperty()->SetColor(0.4, 0.8, 0.4);    // Change the color of the knob when the mouse is held on it
-    sliderRep->GetTubeProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the bar
-    sliderRep->GetCapProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the ends of the bar
-    // set position of the slider
-    sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
-    sliderRep->GetPoint1Coordinate()->SetValue(40, 40);
-    sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
-    sliderRep->GetPoint2Coordinate()->SetValue(240, 40);
-    vtkSmartPointer<vtkSliderWidget> sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
-    sliderWidget->SetInteractor(renderWindowInteractor);
-    sliderWidget->SetRepresentation(sliderRep);
-    sliderWidget->SetAnimationModeToAnimate();
+    cerr << "Creating the sliders...";
+    std::vector<vtkSmartPointer<vtkSliderRepresentation2D>> sliderReps(3);
+    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+        sliderRep->SetMinimumValue(imageSliceMappers[i]->GetSliceNumberMinValue());
+        sliderRep->SetMaximumValue(imageSliceMappers[i]->GetSliceNumberMaxValue());
+        sliderRep->SetValue(74); // Starting with the same nice slice as before
+        sliderRep->SetTitleText("Slice selection");
+        // set color properties
+        sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
+        sliderRep->GetTitleProperty()->SetColor(0, 0, 0);            // Change the color of the text indicating what the slider controls
+        sliderRep->GetLabelProperty()->SetColor(0, 0, 0.4);            // Change the color of the text displaying the value
+        sliderRep->GetSelectedProperty()->SetColor(0.4, 0.8, 0.4);    // Change the color of the knob when the mouse is held on it
+        sliderRep->GetTubeProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the bar
+        sliderRep->GetCapProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the ends of the bar
+        // set position of the slider
+        sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+        sliderRep->GetPoint1Coordinate()->SetValue(40, 40);
+        sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+        sliderRep->GetPoint2Coordinate()->SetValue(190, 40);
+        
+        sliderReps[i] = sliderRep;
+        
+        vtkSmartPointer<vtkSliderWidget> sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
+        sliderWidget->SetInteractor(renderWindowInteractor);
+        sliderWidget->SetRepresentation(sliderRep);
+        sliderWidget->SetAnimationModeToAnimate();
+        
+        // create the callback
+        vtkSmartPointer<vtkSliderCallback> callback = vtkSmartPointer<vtkSliderCallback>::New();
+        callback->sliceMapper = imageSliceMappers[i];
+        sliderWidget->AddObserver(vtkCommand::InteractionEvent, callback);
+        
+        sliderWidgets[i] = sliderWidget;
+    }
+    sliderWidgets[0]->EnabledOn();
     
-    // create the callback
-    vtkSmartPointer<vtkSliderCallback> callback = vtkSmartPointer<vtkSliderCallback>::New();
-    callback->sliceMapper = imageSliceMapper;
-    sliderWidget->AddObserver(vtkCommand::InteractionEvent, callback);
+    cerr << " done" << endl;
     
-    sliderWidget->EnabledOn();
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Setting up the text
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Setup the text and add it to the renderer
+    cerr << "Setting up the text...";
+    std::vector<vtkSmartPointer<vtkTextActor>> textActors(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        textActors[i] = vtkSmartPointer<vtkTextActor>::New();
+        if (i == 0) textActors[i]->SetInput("First timeframe");
+        else if (i == 1) textActors[i]->SetInput("Second timeframe");
+        else textActors[i]->SetInput("Third timeframe");
+        textActors[i]->SetPosition2 (230, 40);
+        textActors[i]->GetTextProperty()->SetFontSize ( 24 );
+        textActors[i]->GetTextProperty()->SetColor ( 1.0, 0.0, 0.0 );
+    }
     cerr << " done" << endl;
     
     
@@ -231,8 +419,8 @@ int main(int, char *[]) {
     /// Setting up the renderers
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Setting up the renderers...";
-    renderer->AddViewProp(imageSlice);
-    renderer->AddActor(imageSlice);
+    renderer->AddViewProp(imageSlices[0]);
+    renderer->AddActor(imageSlices[0]);
     renderer->ResetCamera();
     renderer->SetBackground(1, 1, 1);
 
@@ -243,6 +431,22 @@ int main(int, char *[]) {
     vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
     renderWindowInteractor->SetInteractorStyle(style);
     cerr << " done" << endl;
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Enabling the time button
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    vtkSmartPointer<vtkButtonCallback> callbackButton = vtkSmartPointer<vtkButtonCallback>::New();
+    callbackButton->imageSlices = imageSlices;
+    callbackButton->sliderWidgets = sliderWidgets;
+    callbackButton->renderer = renderer;
+    callbackButton->actor = renderer->GetActors()->GetLastActor();
+    callbackButton->renderWindow = renderWindow;
+    callbackButton->renderWindowInteractor = renderWindowInteractor;
+    callbackButton->styleTrackball = style;
+    callbackButton->texts = textActors;
+    
+    buttonWidget->AddObserver(vtkCommand::StateChangedEvent, callbackButton);
 
     // Render and start interaction
     renderWindowInteractor->SetRenderWindow(renderWindow);
