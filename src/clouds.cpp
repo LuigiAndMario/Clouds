@@ -124,7 +124,6 @@ int main(int, char *[]) {
     reader->SetFileName(file.c_str());
     reader->Update();
     cerr << " done" << endl;
-
     
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the image and lookup table
@@ -132,7 +131,7 @@ int main(int, char *[]) {
     cerr << "Creating the image and lookup table...";
     vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
     image = reader->GetOutput();
-    image->AllocateScalars(VTK_FLOAT, 3);
+    image->GetPointData()->SetActiveScalars("cli");
 
     // Get image values range
     if (DEBUG) {
@@ -161,7 +160,10 @@ int main(int, char *[]) {
         getColorCorrespondingToValue(min, max, range, numColors, val, r, g, b);
         lookupTable->SetTableValue(i, r, g, b);
     }
+    lookupTable->SetRange(min, max);
     lookupTable->Build();
+    cerr << endl << endl;
+    lookupTable->Print(cerr);
     cerr << " done" << endl;
 
     
@@ -181,8 +183,10 @@ int main(int, char *[]) {
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
     imageSlice->SetMapper(imageSliceMapper);
     imageSlice->GetProperty()->SetLookupTable(lookupTable);
+    imageSlice->GetProperty()->UseLookupTableScalarRangeOn();
 //    imageSlice->ForceTranslucentOn();
     imageSlice->Update();
+    imageSlice->Print(cerr);
     cerr << " done" << endl;
     
 
