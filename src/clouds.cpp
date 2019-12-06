@@ -1,4 +1,4 @@
-#define DEBUG (false)
+#define DEBUG (true)
 
 #include <vtkVersion.h>
 #include <vtkXMLImageDataReader.h>
@@ -135,14 +135,19 @@ int main(int, char *[]) {
     image->AllocateScalars(VTK_FLOAT, 3);
 
     // Get image values range
-    if (DEBUG) image->Print(cerr);
+    if (DEBUG) {
+        cerr << endl;
+        image->Print(cerr);
+    }
     float valuesRange[2];
     /// WARNING: Following only works for .cli files
     vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("cli"))->GetValueRange(valuesRange);
 
     double min = valuesRange[0];
     double max = valuesRange[1];
-    if (DEBUG) cerr << "min = " << min << ", max = " << max << endl;
+    if (DEBUG) {
+        cerr << "min = " << min << ", max = " << max << endl;
+    }
     double range = max-min;
     double numColors = 100;
 
@@ -168,7 +173,10 @@ int main(int, char *[]) {
     imageSliceMapper->SetInputData(image);
     imageSliceMapper->SetSliceNumber(74); // Starting with a nice slice
     imageSliceMapper->Update();
-    if (DEBUG) imageSliceMapper->Print(cerr);
+    if (DEBUG) {
+        cerr << endl;
+        imageSliceMapper->Print(cerr);
+    }
     
     vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
     imageSlice->SetMapper(imageSliceMapper);
@@ -184,7 +192,7 @@ int main(int, char *[]) {
     cerr << "Creating the slider...";
     vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
     sliderRep->SetMinimumValue(imageSliceMapper->GetSliceNumberMinValue());
-    sliderRep->SetMaximumValue(imageSliceMapper->GetSliceNumberMaxValue() - 1);
+    sliderRep->SetMaximumValue(imageSliceMapper->GetSliceNumberMaxValue());
     sliderRep->SetValue(74); // Starting with the same nice slice as before
     sliderRep->SetTitleText("Slice selection");
     // set color properties
