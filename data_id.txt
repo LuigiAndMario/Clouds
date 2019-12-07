@@ -1,0 +1,4 @@
+cli -> cloud ice
+clw -> cloud water
+pres -> pressure
+ua/va/wa -> no clue
