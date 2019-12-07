@@ -5,6 +5,6 @@ PROJECT(clouds)
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
  
-add_executable(clouds clouds.cpp)
+add_executable(ice ice.cpp)
  
-target_link_libraries(clouds ${VTK_LIBRARIES})
+target_link_libraries(ice ${VTK_LIBRARIES})
