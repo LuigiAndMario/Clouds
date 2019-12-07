@@ -192,7 +192,7 @@ void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, uns
 }
 
 int main(int, char *[]) {
-    cout << "This program will display the cloud ice data" << endl << fflush;
+    cout << "This program will display the cloud water data" << endl << fflush;
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +258,7 @@ int main(int, char *[]) {
     /// Reading the files
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<vtkSmartPointer<vtkXMLImageDataReader>> readers(3);
-    for (int i = 0 ; i < 3 ; i++) {
+    for (int i = 3 ; i < 5 ; i++) {
         std::string file = files[i];
         cerr << "Reading file " << file << "...";
         vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();

@@ -6,5 +6,7 @@ find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
  
 add_executable(ice ice.cpp)
- 
 target_link_libraries(ice ${VTK_LIBRARIES})
+
+add_executable(water water.cpp)
+target_link_libraries(water ${VTK_LIBRARIES})
