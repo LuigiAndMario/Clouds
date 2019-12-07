@@ -142,12 +142,12 @@ void getColorCorrespondingToValue(double min, double max, double range, double n
                                   double val, double &r, double &g, double &b) {
     static const int numColorNodes = 9;
 	double color[numColorNodes][3] = {
-        {0.0314, 0.3176, 0.6118}, // Blue
-        {0.1922, 0.5098, 0.7412},
-        {0.4196, 0.6824, 0.8392},
-        {0.6196, 0.7922, 0.8824},
+        {0.9373, 0.9529, 1.0000}, // White
         {0.7765, 0.8588, 0.9373},
-        {0.9373, 0.9529, 1.0000} // White
+        {0.6196, 0.7922, 0.8824},
+        {0.4196, 0.6824, 0.8392},
+        {0.1922, 0.5098, 0.7412},
+        {0.0314, 0.3176, 0.6118} // Blue
 	};
 
 	for (int i = 0; i < (numColorNodes - 1); i++) {
@@ -192,7 +192,7 @@ void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, uns
 }
 
 int main(int, char *[]) {
-    cout << "This program will display the cloud water data" << endl << fflush;
+    cout << "This program will display the cloud water data" << endl << std::flush;
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,14 +258,14 @@ int main(int, char *[]) {
     /// Reading the files
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<vtkSmartPointer<vtkXMLImageDataReader>> readers(3);
-    for (int i = 3 ; i < 5 ; i++) {
+    for (int i = 3 ; i < 6 ; i++) {
         std::string file = files[i];
         cerr << "Reading file " << file << "...";
         vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
         reader->SetFileName(file.c_str());
         reader->Update();
         
-        readers[i] = reader;
+        readers[i - 3] = reader;
         cerr << " done" << endl;
     }
     
@@ -278,7 +278,7 @@ int main(int, char *[]) {
     for (int i = 0 ; i < 3 ; i++) {
         vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
         image = readers[i]->GetOutput();
-        image->GetPointData()->SetActiveScalars("cli");
+        image->GetPointData()->SetActiveScalars("clw");
         
         if (DEBUG) {
             cerr << endl;
@@ -288,8 +288,8 @@ int main(int, char *[]) {
 
         // Get image values range
         float valuesRange[2];
-        /// WARNING: Following only works for .cli files
-        vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("cli"))->GetValueRange(valuesRange);
+        /// WARNING: Following only works for .clw files
+        vtkFloatArray::SafeDownCast(image->GetPointData()->GetAbstractArray("clw"))->GetValueRange(valuesRange);
 
         double min = valuesRange[0];
         double max = valuesRange[1];
