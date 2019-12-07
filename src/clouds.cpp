@@ -223,7 +223,7 @@ int main(int, char *[]) {
     
     // Create the widget and its representation
     vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
-    buttonRepresentation->SetNumberOfStates(2);
+    buttonRepresentation->SetNumberOfStates(3);
     buttonRepresentation->SetButtonTexture(0, image1);
     buttonRepresentation->SetButtonTexture(1, image2);
     buttonRepresentation->SetButtonTexture(2, image3);
@@ -408,9 +408,9 @@ int main(int, char *[]) {
         if (i == 0) textActors[i]->SetInput("First timeframe");
         else if (i == 1) textActors[i]->SetInput("Second timeframe");
         else textActors[i]->SetInput("Third timeframe");
-        textActors[i]->SetPosition2 (230, 40);
-        textActors[i]->GetTextProperty()->SetFontSize ( 24 );
-        textActors[i]->GetTextProperty()->SetColor ( 1.0, 0.0, 0.0 );
+        textActors[i]->SetPosition(230, 40);
+        textActors[i]->GetTextProperty()->SetFontSize (24);
+        textActors[i]->GetTextProperty()->SetColor (1.0, 0.0, 0.0);
     }
     cerr << " done" << endl;
     
@@ -421,6 +421,7 @@ int main(int, char *[]) {
     cerr << "Setting up the renderers...";
     renderer->AddViewProp(imageSlices[0]);
     renderer->AddActor(imageSlices[0]);
+    renderer->AddActor2D(textActors[0]);
     renderer->ResetCamera();
     renderer->SetBackground(1, 1, 1);
 
