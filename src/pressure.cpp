@@ -188,7 +188,7 @@ int main(int, char *[]) {
     vtkSmartPointer<vtkImageData> image3 = vtkSmartPointer<vtkImageData>::New();
     CreateImage(image1, green, gray, blue);
     CreateImage(image2, gray, blue, green);
-    CreateImage(image2, blue, green, gray);
+    CreateImage(image3, blue, green, gray);
 
     // Create the widget and its representation
     vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
