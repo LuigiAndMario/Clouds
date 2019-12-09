@@ -13,3 +13,6 @@ target_link_libraries(water ${VTK_LIBRARIES})
 
 add_executable(pressure pressure.cpp)
 target_link_libraries(pressure ${VTK_LIBRARIES})
+
+add_executable(winds winds.cpp)
+target_link_libraries(winds ${VTK_LIBRARIES})
