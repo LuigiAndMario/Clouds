@@ -172,8 +172,13 @@ void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, uns
     }
 }
 
+double seconds(clock_t time) {
+    return double(clock() - time) / CLOCKS_PER_SEC;
+}
+
 int main(int, char *[]) {
     cout << "This program will display the wind data" << endl << std::flush;
+    clock_t time;
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,6 +198,7 @@ int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Create two images for texture
     cerr << "Creating the time button...";
+    time = clock();
     unsigned char green[3] = { 145,207,96 };
     unsigned char gray[3] = { 153,153,153 };
     unsigned char blue[3] = { 89, 85, 250 };
@@ -201,7 +207,7 @@ int main(int, char *[]) {
     vtkSmartPointer<vtkImageData> image3 = vtkSmartPointer<vtkImageData>::New();
     CreateImage(image1, green, gray, blue);
     CreateImage(image2, gray, blue, green);
-    CreateImage(image2, blue, green, gray);
+    CreateImage(image3, blue, green, gray);
 
     // Create the widget and its representation
     vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
@@ -232,7 +238,7 @@ int main(int, char *[]) {
     buttonRepresentation->SetPlaceFactor(1);
     buttonRepresentation->PlaceWidget(bds);
     buttonWidget->On();
-    cerr << " done" << endl;
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the images
@@ -246,6 +252,7 @@ int main(int, char *[]) {
         for (int j = 0; j < 3; j++) {
             std::string file = files[i][j];
             cerr << "Reading vector field component from " << file << "...";
+            time = clock();
             vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
             reader->SetFileName(file.c_str());
             reader->Update();
@@ -277,7 +284,7 @@ int main(int, char *[]) {
                     }
                 }
             }
-            cerr << " done" << endl;
+            cerr << " done (" << seconds(time) << " s)" << endl;
         }
 
         vector_field->GetPointData()->SetActiveVectors(vector_field->GetPointData()->GetScalars()->GetName());
@@ -288,6 +295,7 @@ int main(int, char *[]) {
     /// Creating glyph filters
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Creating the glyph filters...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkGlyph2D>> glyphFilters(3);
     for (int i = 0; i < 3; i++) {
       // Setup the arrows
@@ -303,12 +311,14 @@ int main(int, char *[]) {
 
       glyphFilters[i] = glyphFilter;
     }
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Slicing
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Slicing...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkImageSliceMapper>> imageSliceMappers(3);
     std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices(3);
     std::vector<vtkSmartPointer<vtkPolyDataMapper>> vectorMappers(3);
@@ -325,20 +335,21 @@ int main(int, char *[]) {
       vectorMapper->SetInputConnection(glyphFilters[i]->GetOutputPort());
       vectorMappers[i] = vectorMapper;
     }
-    cerr << " done" << endl;
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the slice sliders
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Creating the sliders...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkSliderRepresentation2D>> sliderReps(3);
     std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets(3);
     for (int i = 0 ; i < 3 ; i++) {
         vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
         sliderRep->SetMinimumValue(imageSliceMappers[i]->GetSliceNumberMinValue());
         sliderRep->SetMaximumValue(imageSliceMappers[i]->GetSliceNumberMaxValue());
-        sliderRep->SetValue(74); // Starting with the same nice slice as before
+        sliderRep->SetValue(1); // Starting with the same nice slice as before
         sliderRep->SetTitleText("Slice selection");
         // set color properties
         sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
@@ -368,8 +379,8 @@ int main(int, char *[]) {
         sliderWidgets[i] = sliderWidget;
     }
     sliderWidgets[0]->EnabledOn();
-   
-    cerr << " done" << endl;
+    
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,6 +388,7 @@ int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Setup the text and add it to the renderer
     cerr << "Setting up the text...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkTextActor>> textActors(3);
     for (int i = 0 ; i < 3 ; i++) {
         textActors[i] = vtkSmartPointer<vtkTextActor>::New();
@@ -387,24 +399,26 @@ int main(int, char *[]) {
         textActors[i]->GetTextProperty()->SetFontSize (24);
         textActors[i]->GetTextProperty()->SetColor (1.0, 0.0, 0.0);
     }
-    cerr << " done" << endl;
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Setting up the vector actors
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Setting up the vector actors...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkActor>> vectorActors(3);
     for (int i = 0; i < 3; i++) {
       // Create actors
       vtkSmartPointer<vtkActor> vectorActor = vtkSmartPointer<vtkActor>::New();
       vectorActor->SetMapper(vectorMappers[i]);
     }
-    cerr << " done" << endl;
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Setting up the renderers
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Setting up the renderers...";
+    time = clock();
     renderer->AddActor(imageSlices[0]);
     renderer->AddActor(vectorActors[0]);
     renderer->AddActor2D(textActors[0]);
@@ -417,7 +431,7 @@ int main(int, char *[]) {
     // Setup render window interactor
     vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
     renderWindowInteractor->SetInteractorStyle(style);
-    cerr << " done" << endl;
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Enabling the time button
