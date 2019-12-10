@@ -258,8 +258,10 @@ int main(int, char *[]) {
             // Get dimensions
             int dims[3];
             data->GetDimensions(dims);
+
+            const int downsampling_rate = 128;
             for (int d = 0; d < 3; d++) {
-                dims[d] /= 64;
+                dims[d] /= downsampling_rate;
             }
 
             // Set dimension equal to the data (only if hasn't been done yet)
@@ -269,9 +271,9 @@ int main(int, char *[]) {
             }
 
             // Copy data from read file to appropriate component in the vector field
-            for (int x = 0; x < dims[0]; x+=64){
-                for (int y = 0; y < dims[1]; y+=64) {
-                    for (int z = 0; z < dims[2]; z+=64) {
+            for (int x = 0; x < dims[0]; x+=downsampling_rate){
+                for (int y = 0; y < dims[1]; y+=downsampling_rate) {
+                    for (int z = 0; z < dims[2]; z+=downsampling_rate) {
                         float component_value = data->GetScalarComponentAsFloat(x, y, z, 0);
                         vector_field->SetScalarComponentFromFloat(x, y, z, j, component_value);
                     }
