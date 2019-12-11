@@ -31,6 +31,8 @@
 #include <vtkGlyph2D.h>
 #include <vtkPolyData.h>
 #include <vtkPoints.h>
+#include <vtkGradientFilter.h>
+#include <vtkAssignAttribute.h>
 
 // Slicing
 #include <vtkImageSliceMapper.h>
@@ -290,23 +292,45 @@ int main(int, char *[]) {
         vector_field->GetPointData()->SetActiveVectors(vector_field->GetPointData()->GetScalars()->GetName());
         vector_fields[i] = vector_field;
     }
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Creating gradient filters
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Creating the gradient filters...";
+    time = clock();
+    std::vector<vtkSmartPointer<vtkGradientFilter>> gradients(3);
+    std::vector<vtkSmartPointer<vtkAssignAttribute>> vectors(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        vtkSmartPointer<vtkGradientFilter> gradient = vtkSmartPointer<vtkGradientFilter>::New();
+        gradient->SetInputData(vector_fields[i]);
+        gradient->ComputeVorticityOn();
+        
+        vtkSmartPointer<vtkAssignAttribute> vector = vtkSmartPointer<vtkAssignAttribute>::New();
+        vector->SetInputConnection(gradient->GetOutputPort());
+        vector->Assign("Gradients", vtkDataSetAttributes::VECTORS, vtkAssignAttribute::POINT_DATA);
+        
+        gradients[i] = gradient;
+        vectors[i] = vector;
+    }
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating glyph filters
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Creating the glyph filters...";
     time = clock();
-    std::vector<vtkSmartPointer<vtkGlyph2D>> glyphFilters(3);
+    std::vector<vtkSmartPointer<vtkGlyph3D>> glyphFilters(3);
     for (int i = 0; i < 3; i++) {
       // Setup the arrows
       vtkSmartPointer<vtkArrowSource> arrowSource = vtkSmartPointer<vtkArrowSource>::New();
       arrowSource->Update();
 
-      vtkSmartPointer<vtkGlyph2D> glyphFilter = vtkSmartPointer<vtkGlyph2D>::New();
-      glyphFilter->SetSourceConnection(arrowSource->GetOutputPort());
+      vtkSmartPointer<vtkGlyph3D> glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
+        glyphFilter->SetSourceConnection(0, arrowSource->GetOutputPort());
+        glyphFilter->SetSourceConnection(1, vectors[i]->GetOutputPort());
       glyphFilter->OrientOn();
       glyphFilter->SetVectorModeToUseVector();
-      glyphFilter->SetInputData(vector_fields[i]);
+//      glyphFilter->SetInputData(vector_fields[i]);
       glyphFilter->Update();
 
       glyphFilters[i] = glyphFilter;
@@ -338,8 +362,18 @@ int main(int, char *[]) {
     cerr << " done (" << seconds(time) << " s)" << endl;
 
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Creating the slice sliders
+    /// Creating the sliders
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Creating the sliders...";
     time = clock();
