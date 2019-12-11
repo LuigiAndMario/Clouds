@@ -268,7 +268,7 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 128;
+            const int downsampling_rate = 32;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
@@ -323,19 +323,19 @@ int main(int, char *[]) {
     time = clock();
     std::vector<vtkSmartPointer<vtkGlyph3D>> glyphFilters(3);
     for (int i = 0; i < 3; i++) {
-      // Setup the arrows
-      vtkSmartPointer<vtkArrowSource> arrowSource = vtkSmartPointer<vtkArrowSource>::New();
-      arrowSource->Update();
+        // Setup the arrows
+        vtkSmartPointer<vtkArrowSource> arrowSource = vtkSmartPointer<vtkArrowSource>::New();
+        arrowSource->Update();
 
-      vtkSmartPointer<vtkGlyph3D> glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
+        vtkSmartPointer<vtkGlyph3D> glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
         glyphFilter->SetSourceConnection(0, arrowSource->GetOutputPort());
         glyphFilter->SetSourceConnection(1, vectors[i]->GetOutputPort());
-      glyphFilter->OrientOn();
-      glyphFilter->SetVectorModeToUseVector();
-//      glyphFilter->SetInputData(vector_fields[i]);
-      glyphFilter->Update();
+        glyphFilter->OrientOn();
+        glyphFilter->SetVectorModeToUseVector();
+//        glyphFilter->SetInputData(vector_fields[i]);
+        glyphFilter->Update();
 
-      glyphFilters[i] = glyphFilter;
+        glyphFilters[i] = glyphFilter;
     }
     cerr << " done (" << seconds(time) << " s)" << endl;
 

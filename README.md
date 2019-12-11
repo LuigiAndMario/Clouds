@@ -1,11 +1,26 @@
 # Clouds visualisation
 
-## To compile
-* Open cmake-gui
-* Select the path to `clouds.cpp` for the source code
-* Select the path to the parent folder of `clouds.cpp`, and add `/build` for the binaries
-* Press configure
-* cmake-gui will crash because it hasn't found the path to VTK - enter the path to VTK in the correct field
-* Press configure again
-* Press generate
-* Press open project
+## Organisation
+The folder must follow the following structure
+```
++-- build
+|  +-- Debug
+|      +-- winds.cpp
+|      +-- water.cpp
+|      +-- pressure.cpp
+|      +-- ice.cpp
++-- cloud_data
+    +-- cli
+    |   +-- cli_10.vti_scaled.vti
+    |   +-- cli_20.vti_scaled.vti
+    |   +-- cli_30.vti_scaled.vti
+    +-- clw
+    |   +-- clw_10.vti_scaled.vti
+    |   +-- ...
+    +-- ...
+```
+## Compiling
+The `CMakeLists.txt` contains rules to compile every file
+
+## Running
+The resulting executables do not take any argument, and read the files in their correct location (explained on the previous folder structure)
