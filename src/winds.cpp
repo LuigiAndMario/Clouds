@@ -79,37 +79,37 @@ public:
         int state = buttonWidget->GetSliderRepresentation()->GetState();
         if (state == 0) {
             // disable time _30
-            renderer->RemoveActor(imageSlices[2]);
+//            renderer->RemoveActor(imageSlices[2]);
             renderer->RemoveActor(vectorActors[2]);
             renderer->RemoveActor2D(texts[2]);
             sliderWidgets[2]->EnabledOff();
 
             // enable time _10
-            renderer->AddActor(imageSlices[0]);
+//            renderer->AddActor(imageSlices[0]);
             renderer->AddActor(vectorActors[0]);
             renderer->AddActor2D(texts[0]);
             sliderWidgets[0]->EnabledOn();
         } else if (state == 1) {
             // disable time _10
-            renderer->RemoveActor(imageSlices[0]);
+//            renderer->RemoveActor(imageSlices[0]);
             renderer->RemoveActor(vectorActors[0]);
             renderer->RemoveActor2D(texts[0]);
             sliderWidgets[0]->EnabledOff();
 
             // enable time _20
-            renderer->AddActor(imageSlices[1]);
+//            renderer->AddActor(imageSlices[1]);
             renderer->AddActor(vectorActors[1]);
             renderer->AddActor2D(texts[1]);
             sliderWidgets[1]->EnabledOn();
         } else {
             // disable time _20
-            renderer->RemoveActor(imageSlices[1]);
+//            renderer->RemoveActor(imageSlices[1]);
             renderer->RemoveActor(vectorActors[1]);
             renderer->RemoveActor2D(texts[1]);
             sliderWidgets[1]->EnabledOff();
 
             // enable time _30
-            renderer->AddActor(imageSlices[2]);
+//            renderer->AddActor(imageSlices[2]);
             renderer->AddActor(vectorActors[2]);
             renderer->AddActor2D(texts[2]);
             sliderWidgets[2]->EnabledOn();
@@ -128,19 +128,17 @@ public:
     std::vector<vtkSmartPointer<vtkTextActor>> texts;
 };
 
-static const std::string files[3] = {
-        "../../cloud_data/winds/winds_10.vti",
-        "../../cloud_data/winds/winds_20.vti",
-        "../../cloud_data/winds/winds_30.vti"
-};
+//static const std::string files[3] = {
+//        "../../cloud_data/winds/winds_10.vti",
+//        "../../cloud_data/winds/winds_20.vti",
+//        "../../cloud_data/winds/winds_30.vti"
+//};
 
-/*
 static const std::string files[3] = {
         "../../cloud_data/winds/winds_10.vti_scaled.vti",
         "../../cloud_data/winds/winds_20.vti_scaled.vti",
         "../../cloud_data/winds/winds_30.vti_scaled.vti"
 };
-*/
 
 void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, unsigned char* color2, unsigned char* color3)
 {
@@ -426,7 +424,7 @@ int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     cerr << "Setting up the renderers...";
     time = clock();
-    renderer->AddActor(imageSlices[0]);
+//    renderer->AddActor(imageSlices[0]);
     renderer->AddActor(vectorActors[0]);
     renderer->AddActor2D(textActors[0]);
     renderer->ResetCamera();

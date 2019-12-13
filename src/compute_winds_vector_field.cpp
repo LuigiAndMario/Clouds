@@ -107,6 +107,11 @@ int main(int, char *[]) {
                 vector_field->SetDimensions(dims);
                 vector_field->AllocateScalars(VTK_FLOAT, 3);
             }
+            
+            // Getting the dimensions
+            float valuesRange[2];
+            vtkFloatArray::SafeDownCast(data->GetPointData()->GetAbstractArray(data->GetPointData()->GetArrayName(0)))
+            ->GetValueRange(valuesRange);
 
             // Copy data from read file to appropriate component in the vector field
             for (int x = 0; x < dims[0]; x++){
@@ -117,27 +122,14 @@ int main(int, char *[]) {
                             y * downsampling_rate,
                             z * downsampling_rate,
                             0);
+                        component_value -= valuesRange[0];
+                        component_value /= (valuesRange[1] - valuesRange[0]);
                         vector_field->SetScalarComponentFromFloat(x, y, z, j, component_value);
                     }
                 }
             }
             cerr << " done (" << seconds(time) << " s)" << endl;
         }
-
-        // Getting the dimensions
-        float valuesRange[2];
-        vtkFloatArray::SafeDownCast(vector_field->GetPointData()->GetAbstractArray(vector_field->GetPointData()->GetArrayName(0)))
-            ->GetValueRange(valuesRange);
-        
-        // Scaling
-        cerr << "Scaling vector field to 0 and 1 ...";
-        time = clock();
-        vtkSmartPointer<vtkImageShiftScale> resize = vtkSmartPointer<vtkImageShiftScale>::New();
-        resize->SetInputData(vector_field);
-        resize->SetShift(-valuesRange[0]);
-        resize->SetScale(1.0 / (valuesRange[1] - valuesRange[0]));
-        resize->Update();
-        cerr << " done (" << seconds(time) << " s)" << endl;
 
 
         // Write resulting vector field to a file
@@ -146,7 +138,7 @@ int main(int, char *[]) {
         cerr << "Writing vector field to " << out_file << "...";
         time = clock();
         writer->SetFileName(out_file.c_str());
-        writer->SetInputData(resize->GetOutput());
+        writer->SetInputData(vector_field);
         writer->Write();
         cerr << " done (" << seconds(time) << " s)" << endl;
     }
