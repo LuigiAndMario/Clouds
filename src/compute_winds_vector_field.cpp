@@ -95,9 +95,9 @@ int main(int, char *[]) {
 
             // Get dimensions
             int dims[3];
-            // data->GetDimensions(dims);
+            data->GetDimensions(dims);
 
-            const int downsampling_rate = 8;
+            const int downsampling_rate = 128;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
@@ -123,24 +123,21 @@ int main(int, char *[]) {
             }
             cerr << " done (" << seconds(time) << " s)" << endl;
         }
-        
+
         // Getting the dimensions
-        int *dims = vector_field->GetDimensions();
-        for (int x = 0; x < dims[0]; x++) {
-            double *pixel = static_cast<double*>(vector_field->GetScalarPointer(x, 0, 0));
-            pixel[0] = x*10;
-        }
-        double valuesRange[2];
-        vector_field->Print(cerr);
-        vtkDoubleArray::SafeDownCast(vector_field->GetPointData()->GetAbstractArray(vector_field->GetPointData()->GetArrayName(0)))->GetValueRange(valuesRange);
+        float valuesRange[2];
+        vtkFloatArray::SafeDownCast(vector_field->GetPointData()->GetAbstractArray(vector_field->GetPointData()->GetArrayName(0)))
+            ->GetValueRange(valuesRange);
         
         // Scaling
-        cerr << "lol" << endl;
+        cerr << "Scaling vector field to 0 and 1 ...";
+        time = clock();
         vtkSmartPointer<vtkImageShiftScale> resize = vtkSmartPointer<vtkImageShiftScale>::New();
         resize->SetInputData(vector_field);
         resize->SetShift(-valuesRange[0]);
         resize->SetScale(1.0 / (valuesRange[1] - valuesRange[0]));
         resize->Update();
+        cerr << " done (" << seconds(time) << " s)" << endl;
 
 
         // Write resulting vector field to a file
