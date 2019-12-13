@@ -9,26 +9,26 @@
 
 static const std::string in_files[3][3] = {
     {
-        "../../cloud_data/ua/ua_10.vti_scaled.vti",
-        "../../cloud_data/va/va_10.vti_scaled.vti",
-        "../../cloud_data/wa/wa_10.vti_scaled.vti",
+        "../../cloud_data/ua/ua_10.vti",
+        "../../cloud_data/va/va_10.vti",
+        "../../cloud_data/wa/wa_10.vti",
     },
     {
-        "../../cloud_data/ua/ua_20.vti_scaled.vti",
-        "../../cloud_data/va/va_20.vti_scaled.vti",
-        "../../cloud_data/wa/wa_20.vti_scaled.vti",
+        "../../cloud_data/ua/ua_20.vti",
+        "../../cloud_data/va/va_20.vti",
+        "../../cloud_data/wa/wa_20.vti",
     },
     {
-        "../../cloud_data/ua/ua_30.vti_scaled.vti",
-        "../../cloud_data/va/va_30.vti_scaled.vti",
-        "../../cloud_data/wa/wa_30.vti_scaled.vti",
+        "../../cloud_data/ua/ua_30.vti",
+        "../../cloud_data/va/va_30.vti",
+        "../../cloud_data/wa/wa_30.vti",
     }
 };
 
 static const std::string out_files[3] = {
-    "../../cloud_data/winds/winds_10.vti_scaled.vti",
-    "../../cloud_data/winds/winds_20.vti_scaled.vti",
-    "../../cloud_data/winds/winds_30.vti_scaled.vti"
+    "../../cloud_data/winds/winds_10.vti",
+    "../../cloud_data/winds/winds_20.vti",
+    "../../cloud_data/winds/winds_30.vti"
 };
 
 double seconds(clock_t time) {
@@ -76,10 +76,14 @@ int main(int, char *[]) {
             }
 
             // Copy data from read file to appropriate component in the vector field
-            for (int x = 0; x < dims[0]; x+=downsampling_rate){
-                for (int y = 0; y < dims[1]; y+=downsampling_rate) {
-                    for (int z = 0; z < dims[2]; z+=downsampling_rate) {
-                        float component_value = data->GetScalarComponentAsFloat(x, y, z, 0);
+            for (int x = 0; x < dims[0]; x++){
+                for (int y = 0; y < dims[1]; y++) {
+                    for (int z = 0; z < dims[2]; z++) {
+                        float component_value = data->GetScalarComponentAsFloat(
+                            x * downsampling_rate,
+                            y * downsampling_rate,
+                            z * downsampling_rate,
+                            0);
                         vector_field->SetScalarComponentFromFloat(x, y, z, j, component_value);
                     }
                 }
