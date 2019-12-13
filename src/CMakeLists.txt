@@ -16,3 +16,6 @@ target_link_libraries(pressure ${VTK_LIBRARIES})
 
 add_executable(winds winds.cpp)
 target_link_libraries(winds ${VTK_LIBRARIES})
+
+add_executable(compute_winds_vector_field compute_winds_vector_field.cpp)
+target_link_libraries(compute_winds_vector_field ${VTK_LIBRARIES})
