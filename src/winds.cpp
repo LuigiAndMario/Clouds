@@ -53,6 +53,10 @@
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 
+// ImageData to PolyData
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkPolyData.h>
+
 // Callback for the slider interaction
 class vtkSliderCallback : public vtkCommand {
 public:
@@ -82,43 +86,43 @@ public:
 //            renderer->RemoveActor(imageSlices[2]);
             renderer->RemoveActor(vectorActors[2]);
             renderer->RemoveActor2D(texts[2]);
-            sliderWidgets[2]->EnabledOff();
+//            sliderWidgets[2]->EnabledOff();
 
             // enable time _10
 //            renderer->AddActor(imageSlices[0]);
             renderer->AddActor(vectorActors[0]);
             renderer->AddActor2D(texts[0]);
-            sliderWidgets[0]->EnabledOn();
+//            sliderWidgets[0]->EnabledOn();
         } else if (state == 1) {
             // disable time _10
 //            renderer->RemoveActor(imageSlices[0]);
             renderer->RemoveActor(vectorActors[0]);
             renderer->RemoveActor2D(texts[0]);
-            sliderWidgets[0]->EnabledOff();
+//            sliderWidgets[0]->EnabledOff();
 
             // enable time _20
 //            renderer->AddActor(imageSlices[1]);
             renderer->AddActor(vectorActors[1]);
             renderer->AddActor2D(texts[1]);
-            sliderWidgets[1]->EnabledOn();
+//            sliderWidgets[1]->EnabledOn();
         } else {
             // disable time _20
 //            renderer->RemoveActor(imageSlices[1]);
             renderer->RemoveActor(vectorActors[1]);
             renderer->RemoveActor2D(texts[1]);
-            sliderWidgets[1]->EnabledOff();
+//            sliderWidgets[1]->EnabledOff();
 
             // enable time _30
 //            renderer->AddActor(imageSlices[2]);
             renderer->AddActor(vectorActors[2]);
             renderer->AddActor2D(texts[2]);
-            sliderWidgets[2]->EnabledOn();
+//            sliderWidgets[2]->EnabledOn();
         }
 
     }
-    vtkButtonCallback() : sliderWidgets(std::vector<vtkSmartPointer<vtkSliderWidget>>(0)), imageSlices(std::vector<vtkSmartPointer<vtkImageSlice>>(0)), vectorActors(std::vector<vtkSmartPointer<vtkActor>>(0)), renderer(0), actor(0), renderWindow(0), renderWindowInteractor(0), styleTrackball(0), texts(std::vector<vtkSmartPointer<vtkTextActor>>(0)){}
-    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets;
-    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices;
+    vtkButtonCallback() : vectorActors(std::vector<vtkSmartPointer<vtkActor>>(0)), renderer(0), actor(0), renderWindow(0), renderWindowInteractor(0), styleTrackball(0), texts(std::vector<vtkSmartPointer<vtkTextActor>>(0)){}
+//    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets;
+//    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices;
     std::vector<vtkSmartPointer<vtkActor>> vectorActors;
     vtkSmartPointer<vtkRenderer> renderer;
     vtkSmartPointer<vtkActor> actor;
@@ -297,95 +301,135 @@ int main(int, char *[]) {
         arrowSource->Update();
 
         vtkSmartPointer<vtkGlyph3D> glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
-        glyphFilter->SetSourceConnection(0, arrowSource->GetOutputPort());
-        glyphFilter->SetSourceConnection(1, vectors[i]->GetOutputPort());
+        glyphFilter->SetSourceConnection(0, vectors[i]->GetOutputPort());
+        glyphFilter->SetSourceConnection(1, arrowSource->GetOutputPort());
         glyphFilter->OrientOn();
         glyphFilter->SetVectorModeToUseVector();
-//        glyphFilter->SetInputData(vector_fields[i]);
+        
+        
+        vtkSmartPointer<vtkImageDataGeometryFilter> imageDataGeometryFilter = vtkSmartPointer<vtkImageDataGeometryFilter>::New();
+        imageDataGeometryFilter->SetInputData(vector_fields[i]);
+        imageDataGeometryFilter->Update();
+        
+        cerr << "LOL";
+//        glyphFilter->SetInputData(imageDataGeometryFilter->GetOutput());
         glyphFilter->Update();
+        cerr << "OLO" << endl;
 
         glyphFilters[i] = glyphFilter;
     }
     cerr << " done (" << seconds(time) << " s)" << endl;
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Slicing
+    /// Creating the vectors
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    cerr << "Slicing...";
-    time = clock();
-    std::vector<vtkSmartPointer<vtkImageSliceMapper>> imageSliceMappers(3);
-    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices(3);
     std::vector<vtkSmartPointer<vtkPolyDataMapper>> vectorMappers(3);
     for (int i = 0 ; i < 3 ; i++) {
-      vtkSmartPointer<vtkImageSliceMapper> imageMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
-      imageMapper->SetInputData(vector_fields[i]);
-      imageSliceMappers[i] = imageMapper;
-
-      vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
-      imageSlice->SetMapper(imageMapper);
-      imageSlices[i] = imageSlice;
-
-      vtkSmartPointer<vtkPolyDataMapper> vectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-      vectorMapper->SetInputConnection(glyphFilters[i]->GetOutputPort());
-      vectorMappers[i] = vectorMapper;
+        vtkSmartPointer<vtkImageSliceMapper> imageMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+    
+        vtkSmartPointer<vtkPolyDataMapper> vectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        vectorMapper->SetInputConnection(glyphFilters[i]->GetOutputPort());
+        vectorMappers[i] = vectorMapper;
     }
     cerr << " done (" << seconds(time) << " s)" << endl;
-
-
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Creating the sliders
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    cerr << "Creating the sliders...";
-    time = clock();
-    std::vector<vtkSmartPointer<vtkSliderRepresentation2D>> sliderReps(3);
-    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets(3);
-    for (int i = 0 ; i < 3 ; i++) {
-        vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
-        sliderRep->SetMinimumValue(imageSliceMappers[i]->GetSliceNumberMinValue());
-        sliderRep->SetMaximumValue(imageSliceMappers[i]->GetSliceNumberMaxValue());
-        sliderRep->SetValue(1); // Starting with the same nice slice as before
-        sliderRep->SetTitleText("Slice selection");
-        // set color properties
-        sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
-        sliderRep->GetTitleProperty()->SetColor(0, 0, 0);            // Change the color of the text indicating what the slider controls
-        sliderRep->GetLabelProperty()->SetColor(0, 0, 0.4);            // Change the color of the text displaying the value
-        sliderRep->GetSelectedProperty()->SetColor(0.4, 0.8, 0.4);    // Change the color of the knob when the mouse is held on it
-        sliderRep->GetTubeProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the bar
-        sliderRep->GetCapProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the ends of the bar
-        // set position of the slider
-        sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
-        sliderRep->GetPoint1Coordinate()->SetValue(40, 40);
-        sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
-        sliderRep->GetPoint2Coordinate()->SetValue(190, 40);
-
-        sliderReps[i] = sliderRep;
-
-        vtkSmartPointer<vtkSliderWidget> sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
-        sliderWidget->SetInteractor(renderWindowInteractor);
-        sliderWidget->SetRepresentation(sliderRep);
-        sliderWidget->SetAnimationModeToAnimate();
-
-        // create the callback
-        vtkSmartPointer<vtkSliderCallback> callback = vtkSmartPointer<vtkSliderCallback>::New();
-        callback->sliceMapper = imageSliceMappers[i];
-        sliderWidget->AddObserver(vtkCommand::InteractionEvent, callback);
-
-        sliderWidgets[i] = sliderWidget;
-    }
-    sliderWidgets[0]->EnabledOn();
-    
-    cerr << " done (" << seconds(time) << " s)" << endl;
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    /// Slicing
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    cerr << "Slicing...";
+//    time = clock();
+//    std::vector<vtkSmartPointer<vtkImageSliceMapper>> imageSliceMappers(3);
+//    std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices(3);
+//    std::vector<vtkSmartPointer<vtkPolyDataMapper>> vectorMappers(3);
+//    for (int i = 0 ; i < 3 ; i++) {
+//      vtkSmartPointer<vtkImageSliceMapper> imageMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+//      imageMapper->SetInputData(vector_fields[i]);
+//      imageSliceMappers[i] = imageMapper;
+//
+//      vtkSmartPointer<vtkImageSlice> imageSlice = vtkSmartPointer<vtkImageSlice>::New();
+//      imageSlice->SetMapper(imageMapper);
+//      imageSlices[i] = imageSlice;
+//
+//      vtkSmartPointer<vtkPolyDataMapper> vectorMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+//      vectorMapper->SetInputConnection(glyphFilters[i]->GetOutputPort());
+//      vectorMappers[i] = vectorMapper;
+//    }
+//    cerr << " done (" << seconds(time) << " s)" << endl;
+//
+//
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    /// Creating the sliders
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    cerr << "Creating the sliders...";
+//    time = clock();
+//    std::vector<vtkSmartPointer<vtkSliderRepresentation2D>> sliderReps(3);
+//    std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets(3);
+//    for (int i = 0 ; i < 3 ; i++) {
+//        vtkSmartPointer<vtkSliderRepresentation2D> sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+//        sliderRep->SetMinimumValue(imageSliceMappers[i]->GetSliceNumberMinValue());
+//        sliderRep->SetMaximumValue(imageSliceMappers[i]->GetSliceNumberMaxValue());
+//        sliderRep->SetValue(1); // Starting with the same nice slice as before
+//        sliderRep->SetTitleText("Slice selection");
+//        // set color properties
+//        sliderRep->GetSliderProperty()->SetColor(0.2, 0.2, 0.6);    // Change the color of the knob that slides
+//        sliderRep->GetTitleProperty()->SetColor(0, 0, 0);            // Change the color of the text indicating what the slider controls
+//        sliderRep->GetLabelProperty()->SetColor(0, 0, 0.4);            // Change the color of the text displaying the value
+//        sliderRep->GetSelectedProperty()->SetColor(0.4, 0.8, 0.4);    // Change the color of the knob when the mouse is held on it
+//        sliderRep->GetTubeProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the bar
+//        sliderRep->GetCapProperty()->SetColor(0.7, 0.7, 0.7);        // Change the color of the ends of the bar
+//        // set position of the slider
+//        sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+//        sliderRep->GetPoint1Coordinate()->SetValue(40, 40);
+//        sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+//        sliderRep->GetPoint2Coordinate()->SetValue(190, 40);
+//
+//        sliderReps[i] = sliderRep;
+//
+//        vtkSmartPointer<vtkSliderWidget> sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
+//        sliderWidget->SetInteractor(renderWindowInteractor);
+//        sliderWidget->SetRepresentation(sliderRep);
+//        sliderWidget->SetAnimationModeToAnimate();
+//
+//        // create the callback
+//        vtkSmartPointer<vtkSliderCallback> callback = vtkSmartPointer<vtkSliderCallback>::New();
+//        callback->sliceMapper = imageSliceMappers[i];
+//        sliderWidget->AddObserver(vtkCommand::InteractionEvent, callback);
+//
+//        sliderWidgets[i] = sliderWidget;
+//    }
+//    sliderWidgets[0]->EnabledOn();
+//
+//    cerr << " done (" << seconds(time) << " s)" << endl;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -442,9 +486,9 @@ int main(int, char *[]) {
     /// Enabling the time button
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     vtkSmartPointer<vtkButtonCallback> callbackButton = vtkSmartPointer<vtkButtonCallback>::New();
-    callbackButton->imageSlices = imageSlices;
+//    callbackButton->imageSlices = imageSlices;
     callbackButton->vectorActors = vectorActors;
-    callbackButton->sliderWidgets = sliderWidgets;
+//    callbackButton->sliderWidgets = sliderWidgets;
     callbackButton->renderer = renderer;
     callbackButton->actor = renderer->GetActors()->GetLastActor();
     callbackButton->renderWindow = renderWindow;
