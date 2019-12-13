@@ -82,7 +82,8 @@ int main(int, char *[]) {
         vtkSmartPointer<vtkImageData> data = vtkSmartPointer<vtkImageData>::New();
 
         // For each component
-        for (int j = 0; j < 3; j++) {
+        int NUM_COMPONENTS = 3;
+        for (int j = 0; j < NUM_COMPONENTS; j++) {
             std::string in_file = in_files[i][j];
             cerr << "Reading vector field component from " << in_file << "...";
             time = clock();
@@ -97,7 +98,7 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 8;
+            const int downsampling_rate = 2;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
@@ -105,7 +106,7 @@ int main(int, char *[]) {
             // Set dimension equal to the data (only if hasn't been done yet)
             if (j == 0) {
                 vector_field->SetDimensions(dims);
-                vector_field->AllocateScalars(VTK_FLOAT, 3);
+                vector_field->AllocateScalars(VTK_FLOAT, NUM_COMPONENTS);
             }
             
             // Getting the dimensions
