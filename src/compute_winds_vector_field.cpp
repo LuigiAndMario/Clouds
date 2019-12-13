@@ -97,7 +97,7 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 128;
+            const int downsampling_rate = 8;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
@@ -130,7 +130,6 @@ int main(int, char *[]) {
             }
             cerr << " done (" << seconds(time) << " s)" << endl;
         }
-
 
         // Write resulting vector field to a file
         vtkSmartPointer<vtkXMLImageDataWriter> writer = vtkSmartPointer<vtkXMLImageDataWriter>::New();
