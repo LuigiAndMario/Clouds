@@ -132,12 +132,6 @@ public:
     std::vector<vtkSmartPointer<vtkTextActor>> texts;
 };
 
-//static const std::string files[3] = {
-//        "../../cloud_data/winds/winds_10.vti",
-//        "../../cloud_data/winds/winds_20.vti",
-//        "../../cloud_data/winds/winds_30.vti"
-//};
-
 static const std::string files[3] = {
         "../../cloud_data/winds/winds_10.vti_scaled.vti",
         "../../cloud_data/winds/winds_20.vti_scaled.vti",
