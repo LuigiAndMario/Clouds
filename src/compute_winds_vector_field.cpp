@@ -7,28 +7,33 @@
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
 
+#include <vtkImageResize.h>
+
+#include <vtkDoubleArray.h>
+#include <vtkImageShiftScale.h>
+
 static const std::string in_files[3][3] = {
     {
-        "../../cloud_data/ua/ua_10.vti",
-        "../../cloud_data/va/va_10.vti",
-        "../../cloud_data/wa/wa_10.vti",
+        "../../cloud_data/ua/ua_10.vti_scaled.vti",
+        "../../cloud_data/va/va_10.vti_scaled.vti",
+        "../../cloud_data/wa/wa_10.vti_scaled.vti",
     },
     {
-        "../../cloud_data/ua/ua_20.vti",
-        "../../cloud_data/va/va_20.vti",
-        "../../cloud_data/wa/wa_20.vti",
+        "../../cloud_data/ua/ua_20.vti_scaled.vti",
+        "../../cloud_data/va/va_20.vti_scaled.vti",
+        "../../cloud_data/wa/wa_20.vti_scaled.vti",
     },
     {
-        "../../cloud_data/ua/ua_30.vti",
-        "../../cloud_data/va/va_30.vti",
-        "../../cloud_data/wa/wa_30.vti",
+        "../../cloud_data/ua/ua_30.vti_scaled.vti",
+        "../../cloud_data/va/va_30.vti_scaled.vti",
+        "../../cloud_data/wa/wa_30.vti_scaled.vti",
     }
 };
 
 static const std::string out_files[3] = {
-    "../../cloud_data/winds/winds_10.vti",
-    "../../cloud_data/winds/winds_20.vti",
-    "../../cloud_data/winds/winds_30.vti"
+    "../../cloud_data/winds/winds_10.vti_scaled.vti",
+    "../../cloud_data/winds/winds_20.vti_scaled.vti",
+    "../../cloud_data/winds/winds_30.vti_scaled.vti"
 };
 
 double seconds(clock_t time) {
@@ -36,7 +41,7 @@ double seconds(clock_t time) {
 }
 
 int main(int, char *[]) {
-    cout << "This program will create a downsampled .vti file containing the wind data (extracted from the ua, va and wa files)" << endl << std::flush;
+    cout << "This program will create a downsampled .vti_scaled.vti file containing the wind data (extracted from the ua, va and wa files)" << endl << std::flush;
     clock_t time;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +69,7 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 32;
+            const int downsampling_rate = 128;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
@@ -90,6 +95,25 @@ int main(int, char *[]) {
             }
             cerr << " done (" << seconds(time) << " s)" << endl;
         }
+        
+        // Getting the dimensions
+        int *dims = vector_field->GetDimensions();
+        for (int x = 0; x < dims[0]; x++) {
+            double *pixel = static_cast<double*>(vector_field->GetScalarPointer(x, 0, 0));
+            pixel[0] = x*10;
+        }
+        double valuesRange[2];
+        vector_field->Print(cerr);
+        vtkDoubleArray::SafeDownCast(vector_field->GetPointData()->GetAbstractArray(vector_field->GetPointData()->GetArrayName(0)))->GetValueRange(valuesRange);
+        
+        // Scaling
+        cerr << "lol" << endl;
+        vtkSmartPointer<vtkImageShiftScale> resize = vtkSmartPointer<vtkImageShiftScale>::New();
+        resize->SetInputData(vector_field);
+        resize->SetShift(-valuesRange[0]);
+        resize->SetScale(1.0 / (valuesRange[1] - valuesRange[0]));
+        resize->Update();
+
 
         // Write resulting vector field to a file
         vtkSmartPointer<vtkXMLImageDataWriter> writer = vtkSmartPointer<vtkXMLImageDataWriter>::New();
@@ -97,7 +121,7 @@ int main(int, char *[]) {
         cerr << "Writing vector field to " << out_file << "...";
         time = clock();
         writer->SetFileName(out_file.c_str());
-        writer->SetInputData(vector_field);
+        writer->SetInputData(resize->GetOutput());
         writer->Write();
         cerr << " done (" << seconds(time) << " s)" << endl;
     }
