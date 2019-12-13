@@ -98,7 +98,7 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 128;
+            const int downsampling_rate = 32;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
