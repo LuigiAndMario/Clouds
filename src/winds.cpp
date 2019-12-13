@@ -295,52 +295,15 @@ int main(int, char *[]) {
         arrowSource->Update();
 
         vtkSmartPointer<vtkGlyph3D> glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
-        glyphFilter->SetSourceConnection(0, vectors[i]->GetOutputPort());
-        glyphFilter->SetSourceConnection(1, arrowSource->GetOutputPort());
+        glyphFilter->SetSourceConnection(arrowSource->GetOutputPort());
         glyphFilter->OrientOn();
         glyphFilter->SetVectorModeToUseVector();
-        
-        
-        vtkSmartPointer<vtkImageDataGeometryFilter> imageDataGeometryFilter = vtkSmartPointer<vtkImageDataGeometryFilter>::New();
-        imageDataGeometryFilter->SetInputData(vector_fields[i]);
-        imageDataGeometryFilter->Update();
-        
-        cerr << "LOL";
-//        glyphFilter->SetInputData(imageDataGeometryFilter->GetOutput());
+        glyphFilter->SetInputData(vector_fields[i]);
         glyphFilter->Update();
-        cerr << "OLO" << endl;
-
+      
         glyphFilters[i] = glyphFilter;
     }
     cerr << " done (" << seconds(time) << " s)" << endl;
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the vectors
