@@ -31,6 +31,32 @@ static const std::string out_files[3] = {
     "../../cloud_data/winds/winds_30.vti"
 };
 
+/*
+static const std::string in_files[3][3] = {
+    {
+        "../../cloud_data/ua/ua_10.vti_scaled.vti",
+        "../../cloud_data/va/va_10.vti_scaled.vti",
+        "../../cloud_data/wa/wa_10.vti_scaled.vti",
+    },
+    {
+        "../../cloud_data/ua/ua_20.vti_scaled.vti",
+        "../../cloud_data/va/va_20.vti_scaled.vti",
+        "../../cloud_data/wa/wa_20.vti_scaled.vti",
+    },
+    {
+        "../../cloud_data/ua/ua_30.vti_scaled.vti",
+        "../../cloud_data/va/va_30.vti_scaled.vti",
+        "../../cloud_data/wa/wa_30.vti_scaled.vti",
+    }
+};
+
+static const std::string out_files[3] = {
+    "../../cloud_data/winds/winds_10.vti_scaled.vti",
+    "../../cloud_data/winds/winds_20.vti_scaled.vti",
+    "../../cloud_data/winds/winds_30.vti_scaled.vti"
+};
+*/
+
 double seconds(clock_t time) {
     return double(clock() - time) / CLOCKS_PER_SEC;
 }
@@ -46,25 +72,27 @@ int main(int, char *[]) {
     for (int i = 0; i < 3; i++) {
         vtkSmartPointer<vtkImageData> vector_field = vtkSmartPointer<vtkImageData>::New();
 
+        // Read in vector field values
+        vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
+        vtkSmartPointer<vtkImageData> data = vtkSmartPointer<vtkImageData>::New();
+
         // For each component
         for (int j = 0; j < 3; j++) {
             std::string in_file = in_files[i][j];
             cerr << "Reading vector field component from " << in_file << "...";
             time = clock();
-            vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
             reader->SetFileName(in_file.c_str());
             reader->Update();
 
             // Get the read data
-            vtkSmartPointer<vtkImageData> data = vtkSmartPointer<vtkImageData>::New();
             data = reader->GetOutput();
             data->GetPointData()->SetActiveScalars(data->GetPointData()->GetArrayName(0));
 
             // Get dimensions
             int dims[3];
-            data->GetDimensions(dims);
+            // data->GetDimensions(dims);
 
-            const int downsampling_rate = 32;
+            const int downsampling_rate = 8;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }

@@ -128,23 +128,19 @@ public:
     std::vector<vtkSmartPointer<vtkTextActor>> texts;
 };
 
-static const std::string files[3][3] = {
-    {
-        "../../cloud_data/ua/ua_10.vti_scaled.vti",
-        "../../cloud_data/va/va_10.vti_scaled.vti",
-        "../../cloud_data/wa/wa_10.vti_scaled.vti",
-    },
-    {
-        "../../cloud_data/ua/ua_20.vti_scaled.vti",
-        "../../cloud_data/va/va_20.vti_scaled.vti",
-        "../../cloud_data/wa/wa_20.vti_scaled.vti",
-    },
-    {
-        "../../cloud_data/ua/ua_30.vti_scaled.vti",
-        "../../cloud_data/va/va_30.vti_scaled.vti",
-        "../../cloud_data/wa/wa_30.vti_scaled.vti",
-    }
+static const std::string files[3] = {
+        "../../cloud_data/winds/winds_10.vti",
+        "../../cloud_data/winds/winds_20.vti",
+        "../../cloud_data/winds/winds_30.vti"
 };
+
+/*
+static const std::string files[3] = {
+        "../../cloud_data/winds/winds_10.vti_scaled.vti",
+        "../../cloud_data/winds/winds_20.vti_scaled.vti",
+        "../../cloud_data/winds/winds_30.vti_scaled.vti"
+};
+*/
 
 void CreateImage(vtkSmartPointer<vtkImageData> image, unsigned char* color1, unsigned char* color2, unsigned char* color3)
 {
@@ -243,54 +239,29 @@ int main(int, char *[]) {
     cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Reading the files
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    std::vector<vtkSmartPointer<vtkXMLImageDataReader>> readers(3);
+    for (int i = 0 ; i < 3 ; i++) {
+        std::string file = files[i];
+        cerr << "Reading file " << file << "...";
+        time = clock();
+        vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
+        reader->SetFileName(file.c_str());
+        reader->Update();
+
+        readers[i] = reader;
+        cerr << " done (" << seconds(time) << " s)" << endl;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the images
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<vtkSmartPointer<vtkImageData>> vector_fields(3);
     // For each timestep
     for (int i = 0; i < vector_fields.size(); i++) {
         vtkSmartPointer<vtkImageData> vector_field = vtkSmartPointer<vtkImageData>::New();
-
-        // For each component
-        for (int j = 0; j < 3; j++) {
-            std::string file = files[i][j];
-            cerr << "Reading vector field component from " << file << "...";
-            time = clock();
-            vtkSmartPointer<vtkXMLImageDataReader> reader = vtkSmartPointer<vtkXMLImageDataReader>::New();
-            reader->SetFileName(file.c_str());
-            reader->Update();
-
-            // Get the read data
-            vtkSmartPointer<vtkImageData> data = vtkSmartPointer<vtkImageData>::New();
-            data = reader->GetOutput();
-            data->GetPointData()->SetActiveScalars(data->GetPointData()->GetArrayName(0));
-
-            // Get dimensions
-            int dims[3];
-            data->GetDimensions(dims);
-
-            const int downsampling_rate = 32;
-            for (int d = 0; d < 3; d++) {
-                dims[d] /= downsampling_rate;
-            }
-
-            // Set dimension equal to the data (only if hasn't been done yet)
-            if (j == 0) {
-                vector_field->SetDimensions(dims);
-                vector_field->AllocateScalars(VTK_FLOAT, 3);
-            }
-
-            // Copy data from read file to appropriate component in the vector field
-            for (int x = 0; x < dims[0]; x+=downsampling_rate){
-                for (int y = 0; y < dims[1]; y+=downsampling_rate) {
-                    for (int z = 0; z < dims[2]; z+=downsampling_rate) {
-                        float component_value = data->GetScalarComponentAsFloat(x, y, z, 0);
-                        vector_field->SetScalarComponentFromFloat(x, y, z, j, component_value);
-                    }
-                }
-            }
-            cerr << " done (" << seconds(time) << " s)" << endl;
-        }
-
+        vector_field = readers[i]->GetOutput();
         vector_field->GetPointData()->SetActiveVectors(vector_field->GetPointData()->GetScalars()->GetName());
         vector_fields[i] = vector_field;
     }
