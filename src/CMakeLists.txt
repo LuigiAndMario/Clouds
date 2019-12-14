@@ -22,3 +22,6 @@ target_link_libraries(compute_winds_vector_field ${VTK_LIBRARIES})
 
 add_executable(winds_streamlines winds_streamlines.cpp)
 target_link_libraries(winds_streamlines ${VTK_LIBRARIES})
+
+add_executable(winds_vorticity winds_vorticity.cpp)
+target_link_libraries(winds_vorticity ${VTK_LIBRARIES})
