@@ -20,9 +20,5 @@ target_link_libraries(winds_vf ${VTK_LIBRARIES})
 add_executable(compute_winds_vector_field compute_winds_vector_field.cpp)
 target_link_libraries(compute_winds_vector_field ${VTK_LIBRARIES})
 
-add_executable(winds_no_slice winds_no_slice.cpp)
-target_link_libraries(winds_no_slice ${VTK_LIBRARIES})
-
-
 add_executable(winds_streamlines winds_streamlines.cpp)
 target_link_libraries(winds_streamlines ${VTK_LIBRARIES})
