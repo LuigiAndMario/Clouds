@@ -101,14 +101,14 @@ public:
         }
         
     }
-    vtkButtonCallback() : sliderWidgets(std::vector<vtkSmartPointer<vtkSliderWidget>>(0)), imageSlices(std::vector<vtkSmartPointer<vtkImageSlice>>(0)), renderer(0), actor(0), renderWindow(0), renderWindowInteractor(0), styleTrackball(0), texts(std::vector<vtkSmartPointer<vtkTextActor>>(0)){}
+        vtkButtonCallback() : sliderWidgets(std::vector<vtkSmartPointer<vtkSliderWidget>>(0)),
+                              imageSlices(std::vector<vtkSmartPointer<vtkImageSlice>>(0)),
+                              renderer(0),
+                              texts(std::vector<vtkSmartPointer<vtkTextActor>>(0)){}
+
     std::vector<vtkSmartPointer<vtkSliderWidget>> sliderWidgets;
     std::vector<vtkSmartPointer<vtkImageSlice>> imageSlices;
     vtkSmartPointer<vtkRenderer> renderer;
-    vtkSmartPointer<vtkActor> actor;
-    vtkSmartPointer<vtkRenderWindow> renderWindow;
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
-    vtkSmartPointer<vtkInteractorStyleTrackballCamera> styleTrackball;
     std::vector<vtkSmartPointer<vtkTextActor>> texts;
 };
 
@@ -451,15 +451,11 @@ int main(int, char *[]) {
     /// Enabling the time button
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     vtkSmartPointer<vtkButtonCallback> callbackButton = vtkSmartPointer<vtkButtonCallback>::New();
-    callbackButton->imageSlices = imageSlices;
     callbackButton->sliderWidgets = sliderWidgets;
+    callbackButton->imageSlices = imageSlices;
     callbackButton->renderer = renderer;
-    callbackButton->actor = renderer->GetActors()->GetLastActor();
-    callbackButton->renderWindow = renderWindow;
-    callbackButton->renderWindowInteractor = renderWindowInteractor;
-    callbackButton->styleTrackball = style;
     callbackButton->texts = textActors;
-    
+
     buttonWidget->AddObserver(vtkCommand::StateChangedEvent, callbackButton);
     
     // Render and start interaction

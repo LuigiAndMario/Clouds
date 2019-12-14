@@ -36,32 +36,6 @@ static const std::string out_files[3] = {
     "../../cloud_data/winds/winds_30.vti_scaled.vti"
 };
 
-/*
-static const std::string in_files[3][3] = {
-    {
-        "../../cloud_data/ua/ua_10.vti_scaled.vti",
-        "../../cloud_data/va/va_10.vti_scaled.vti",
-        "../../cloud_data/wa/wa_10.vti_scaled.vti",
-    },
-    {
-        "../../cloud_data/ua/ua_20.vti_scaled.vti",
-        "../../cloud_data/va/va_20.vti_scaled.vti",
-        "../../cloud_data/wa/wa_20.vti_scaled.vti",
-    },
-    {
-        "../../cloud_data/ua/ua_30.vti_scaled.vti",
-        "../../cloud_data/va/va_30.vti_scaled.vti",
-        "../../cloud_data/wa/wa_30.vti_scaled.vti",
-    }
-};
-
-static const std::string out_files[3] = {
-    "../../cloud_data/winds/winds_10.vti_scaled.vti",
-    "../../cloud_data/winds/winds_20.vti_scaled.vti",
-    "../../cloud_data/winds/winds_30.vti_scaled.vti"
-};
-*/
-
 double seconds(clock_t time) {
     return double(clock() - time) / CLOCKS_PER_SEC;
 }
