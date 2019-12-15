@@ -271,6 +271,12 @@ int main(int, char *[]) {
         vtkSmartPointer<vtkStructuredGrid> sgrid = vtkSmartPointer<vtkStructuredGrid>::New();
         sgrid = vtkStructuredGrid::SafeDownCast(vector_fields[i]);
         
+        vtkSmartPointer<vtkGradientFilter> gradient = vtkSmartPointer<vtkGradientFilter>::New();
+        gradient->SetInputData(sgrid);
+        gradient->SetInputConnection(readers[i]->GetOutputPort());
+        gradient->ComputeVorticityOn();
+        gradient->Update();
+        
         // Creating the hedgehog
         vtkSmartPointer<vtkHedgeHog> hedgehog = vtkSmartPointer<vtkHedgeHog>::New();
         hedgehog->SetInputData(sgrid);
