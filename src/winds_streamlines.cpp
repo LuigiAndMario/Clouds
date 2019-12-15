@@ -166,7 +166,7 @@ double seconds(clock_t time) {
 }
 
 int main(int, char *[]) {
-    cout << "This program will display the wind data" << endl << std::flush;
+    cout << "This program will display the streamlines of the wind data" << endl << std::flush;
     clock_t time;
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
@@ -249,6 +249,8 @@ int main(int, char *[]) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the images
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Creating the images ...";
+    time = clock();
     std::vector<vtkSmartPointer<vtkImageData>> vector_fields(3);
     // For each timestep
     for (int i = 0; i < vector_fields.size(); i++) {
@@ -257,10 +259,13 @@ int main(int, char *[]) {
         vector_field->GetPointData()->SetActiveVectors(vector_field->GetPointData()->GetScalars()->GetName());
         vector_fields[i] = vector_field;
     }
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the vector fields and computing stream lines
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    cerr << "Computing the streamlines ...";
+    time = clock();
     std::vector<std::vector<vtkSmartPointer<vtkActor>>> streamlineActors(3);
     for (int i = 0; i < streamlineActors.size(); i++) {
         vtk_vf wind_vf(vector_fields[i]);
@@ -285,6 +290,7 @@ int main(int, char *[]) {
 
         streamlineActors[i] = streamlines;
     }
+    cerr << " done (" << seconds(time) << " s)" << endl;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

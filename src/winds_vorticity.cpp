@@ -166,7 +166,7 @@ double seconds(clock_t time) {
 }
 
 int main(int, char *[]) {
-    cout << "This program will display the wind data" << endl << std::flush;
+    cout << "This program will display the vorticity of the wind data" << endl << std::flush;
     clock_t time;
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Creating the renderer and window interactor
