@@ -12,6 +12,9 @@
 #include <vtkDoubleArray.h>
 #include <vtkImageShiftScale.h>
 
+// Change the downsampling rate here
+const int downsampling_rate = 32;
+
 static const std::string in_files[3][3] = {
     {
         "../../cloud_data/ua/ua_10.vti_scaled.vti",
@@ -72,7 +75,6 @@ int main(int, char *[]) {
             int dims[3];
             data->GetDimensions(dims);
 
-            const int downsampling_rate = 32;
             for (int d = 0; d < 3; d++) {
                 dims[d] /= downsampling_rate;
             }
